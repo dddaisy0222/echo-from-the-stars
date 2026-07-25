@@ -10,19 +10,19 @@ export async function generateMetadata(): Promise<Metadata> {
 
   return {
     metadataBase: new URL(origin),
-    title: "Echo｜来自星星的我",
-    description: "一场与过去、未来和平行时空中的自己对话的意识航行。",
+    title: "Echo｜Possible Worlds",
+    description: "写下一个困住你的问题，穿越四条世界线，与做出不同选择的自己对话。",
     openGraph: {
-      title: "Echo｜来自星星的我",
-      description: "穿越时间与可能性，听见来自另一个自己的回声。",
+      title: "Echo｜Possible Worlds",
+      description: "如果人生有另一条路，那里的你，过得好吗？",
       type: "website",
-      images: [{ url: `${origin}/og.png`, width: 1536, height: 1024, alt: "Echo 内在宇宙星图" }],
+      images: [{ url: `${origin}/og-v2.png`, width: 1536, height: 1024, alt: "Echo 平行世界叙事游戏" }],
     },
     twitter: {
       card: "summary_large_image",
-      title: "Echo｜来自星星的我",
-      description: "穿越时间与可能性，听见来自另一个自己的回声。",
-      images: [`${origin}/og.png`],
+      title: "Echo｜Possible Worlds",
+      description: "如果人生有另一条路，那里的你，过得好吗？",
+      images: [`${origin}/og-v2.png`],
     },
   };
 }
