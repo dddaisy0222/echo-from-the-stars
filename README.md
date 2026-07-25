@@ -4,7 +4,7 @@ Echo 是一场与平行世界中的自己对话的选择游戏。它把困扰你
 
 ## 在线体验
 
-- [国内网络备用入口（jsDelivr）](https://cdn.jsdelivr.net/gh/dddaisy0222/echo-from-the-stars@main/docs/index.html)
+- [推荐体验入口（Vercel）](https://echo-from-the-stars.vercel.app/)
 - [GitHub Pages 版](https://dddaisy0222.github.io/echo-from-the-stars/)
 - [Echo Sites 版](https://echo-from-the-stars.yuanxin20020222.chatgpt.site/)
 
