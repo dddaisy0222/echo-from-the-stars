@@ -617,6 +617,34 @@
   margin: 0;
 }
 
+.enterWorld {
+  width: 100%;
+  min-height: 60px;
+  margin-top: 14px;
+  padding: 0 20px;
+  border: 1px solid rgba(231, 199, 143, .42);
+  color: #1a211b;
+  background: #e8c58f;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  font-size: 12px;
+  letter-spacing: .08em;
+  cursor: pointer;
+  transition: transform .2s ease, background .2s ease;
+}
+
+.enterWorld:hover {
+  transform: translateY(-2px);
+  background: #f0d3a5;
+}
+
+.enterWorld b {
+  font-size: 22px;
+  font-weight: 400;
+}
+
 .shell footer {
   min-height: 74px;
   padding: 0 5vw;

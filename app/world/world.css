@@ -1,0 +1,846 @@
+:root {
+  color: #f3f0e8;
+  background: #080a0b;
+  font-family:
+    Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    "PingFang SC", "Hiragino Sans GB", sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+html,
+body,
+#app {
+  width: 100%;
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  overflow: hidden;
+}
+
+button,
+a {
+  font: inherit;
+}
+
+.landing {
+  min-height: 100vh;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  padding: clamp(28px, 5vw, 72px);
+  background:
+    radial-gradient(circle at 72% 40%, rgba(72, 90, 93, 0.2), transparent 34%),
+    linear-gradient(145deg, #101416 0%, #060708 68%);
+}
+
+.landing > div {
+  align-self: center;
+  max-width: 780px;
+}
+
+.eyebrow {
+  margin: 0;
+  color: rgba(232, 237, 232, 0.55);
+  font: 500 11px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: 0.2em;
+}
+
+.landing h1 {
+  margin: 0 0 30px;
+  font-family: "Songti SC", "STSong", Georgia, serif;
+  font-size: clamp(48px, 7.5vw, 108px);
+  font-weight: 400;
+  line-height: 1.06;
+  letter-spacing: -0.055em;
+}
+
+.landing-copy {
+  max-width: 520px;
+  margin: 0 0 42px;
+  color: rgba(238, 239, 233, 0.65);
+  font-size: 15px;
+  line-height: 1.8;
+}
+
+.enter-link {
+  width: min(100%, 360px);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.32);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+  color: #fff;
+  text-decoration: none;
+  transition: padding 220ms ease, border-color 220ms ease;
+}
+
+.enter-link:hover {
+  padding-inline: 12px;
+  border-color: rgba(255, 255, 255, 0.65);
+}
+
+.landing-footnote {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+}
+
+.world-shell,
+.world-canvas,
+.world-canvas canvas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.world-canvas canvas {
+  display: block;
+  outline: none;
+}
+
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background:
+    radial-gradient(circle at center, rgba(31, 42, 43, 0.36), transparent 52%),
+    rgba(5, 7, 8, 0.96);
+  transition: opacity 500ms ease, visibility 500ms ease;
+}
+
+.loading-overlay.is-ready:not(.is-paused) {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.loading-overlay.is-paused {
+  background: rgba(5, 7, 8, 0.78);
+}
+
+.loading-card {
+  width: min(520px, 100%);
+  text-align: center;
+}
+
+.loading-kicker {
+  margin: 0 0 18px;
+  color: rgba(255, 255, 255, 0.38);
+  font: 500 10px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: 0.24em;
+}
+
+.loading-card h1 {
+  margin: 0;
+  font-family: "Songti SC", "STSong", Georgia, serif;
+  font-size: clamp(28px, 4.5vw, 48px);
+  font-weight: 400;
+  letter-spacing: -0.035em;
+}
+
+.loading-card > p:nth-of-type(2) {
+  min-height: 20px;
+  margin: 18px 0 26px;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 12px;
+}
+
+.loading-track {
+  height: 1px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.loading-track span {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: rgba(221, 237, 234, 0.88);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 220ms ease;
+}
+
+.loading-card button {
+  margin-top: 28px;
+  padding: 11px 22px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 999px;
+  color: #eef3ee;
+  background: rgba(255, 255, 255, 0.06);
+  cursor: pointer;
+}
+
+.loading-card button:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.has-error .loading-card h1 {
+  color: #ff9a88;
+}
+
+.crosshair {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 8;
+  width: 4px;
+  height: 4px;
+  margin: -2px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.62);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+}
+
+.debug-panel {
+  position: fixed;
+  top: 18px;
+  left: 18px;
+  z-index: 10;
+  width: min(330px, calc(100vw - 36px));
+  padding: 14px;
+  border: 1px solid rgba(190, 230, 229, 0.16);
+  border-radius: 8px;
+  color: rgba(226, 240, 237, 0.88);
+  background: rgba(5, 11, 12, 0.72);
+  box-shadow: 0 12px 42px rgba(0, 0, 0, 0.24);
+  backdrop-filter: blur(14px);
+  font: 10px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;
+  pointer-events: none;
+}
+
+.echo-progress {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  z-index: 11;
+  width: min(280px, calc(100vw - 40px));
+  padding: 15px 16px 14px;
+  border: 1px solid rgba(229, 222, 199, 0.15);
+  color: rgba(244, 242, 231, 0.82);
+  background: rgba(8, 15, 14, 0.62);
+  box-shadow: 0 14px 48px rgba(0, 0, 0, 0.22);
+  backdrop-filter: blur(12px);
+  pointer-events: none;
+}
+
+.echo-progress small {
+  color: rgba(226, 196, 142, 0.72);
+  font: 500 9px/1.3 ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: 0.16em;
+}
+
+.echo-progress strong {
+  display: block;
+  margin: 9px 0 6px;
+  font-family: "Songti SC", "STSong", Georgia, serif;
+  font-size: 22px;
+  font-weight: 400;
+}
+
+.echo-progress p {
+  margin: 0;
+  color: rgba(239, 239, 229, 0.48);
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.echo-awakening {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 35;
+  width: min(520px, calc(100vw - 40px));
+  padding: 28px;
+  border: 1px solid rgba(207, 228, 217, 0.18);
+  color: rgba(242, 246, 237, 0.92);
+  background: rgba(7, 15, 14, 0.78);
+  box-shadow: 0 26px 100px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(18px);
+  text-align: center;
+  opacity: 0;
+  transform: translate(-50%, -46%);
+  transition: opacity 500ms ease, transform 500ms ease;
+  pointer-events: none;
+}
+
+.echo-awakening[hidden] {
+  display: none;
+}
+
+.echo-awakening.is-visible {
+  opacity: 1;
+  transform: translate(-50%, -50%);
+}
+
+.echo-awakening small {
+  color: rgba(139, 214, 202, 0.62);
+  font: 500 9px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: 0.22em;
+}
+
+.echo-awakening p {
+  margin: 14px 0 0;
+  font-family: "Songti SC", "STSong", Georgia, serif;
+  font-size: clamp(19px, 3vw, 28px);
+}
+
+.debug-heading,
+.debug-panel dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.debug-heading {
+  padding-bottom: 9px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.46);
+}
+
+.debug-panel dl {
+  display: grid;
+  gap: 5px;
+  margin: 10px 0;
+}
+
+.debug-panel dt {
+  color: rgba(255, 255, 255, 0.42);
+}
+
+.debug-panel dd {
+  margin: 0;
+  text-align: right;
+}
+
+.debug-panel > p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.38);
+}
+
+.world-hint {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  z-index: 9;
+  display: flex;
+  gap: 18px;
+  padding: 9px 14px;
+  border-radius: 999px;
+  color: rgba(255, 255, 255, 0.58);
+  background: rgba(7, 10, 11, 0.55);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  opacity: 0;
+  transform: translate(-50%, 8px);
+  transition: 250ms ease;
+  pointer-events: none;
+}
+
+.world-hint.is-visible {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.water-indicator {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 9;
+  padding: 9px 12px;
+  border: 1px solid rgba(130, 211, 226, 0.15);
+  border-radius: 4px;
+  color: rgba(191, 234, 240, 0.66);
+  background: rgba(5, 19, 23, 0.52);
+  font-size: 11px;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: 300ms ease;
+  pointer-events: none;
+}
+
+.water-indicator.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.interaction-prompt {
+  position: fixed;
+  left: 50%;
+  bottom: 86px;
+  z-index: 12;
+  padding: 10px 15px;
+  border: 1px solid rgba(182, 224, 218, 0.28);
+  border-radius: 999px;
+  color: rgba(240, 248, 245, 0.92);
+  background: rgba(7, 16, 17, 0.76);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.24);
+  backdrop-filter: blur(10px);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.memory-dialog {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background:
+    radial-gradient(circle at 50% 60%, rgba(30, 70, 71, 0.17), transparent 42%),
+    rgba(3, 7, 8, 0.82);
+  backdrop-filter: blur(8px);
+}
+
+.memory-dialog[hidden],
+.interaction-prompt[hidden],
+.inventory-notice[hidden] {
+  display: none;
+}
+
+.memory-dialog__card {
+  width: min(640px, 100%);
+  padding: clamp(28px, 5vw, 54px);
+  border: 1px solid rgba(182, 222, 216, 0.14);
+  background: rgba(8, 14, 15, 0.9);
+  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.48);
+}
+
+.memory-dialog__eyebrow {
+  margin: 0 0 24px;
+  color: rgba(134, 207, 197, 0.62);
+  font: 500 10px/1.3 ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.memory-dialog__narration {
+  margin: 0 0 24px;
+  color: rgba(226, 237, 232, 0.62);
+  font-family: "Songti SC", "STSong", Georgia, serif;
+  font-size: clamp(17px, 2vw, 21px);
+  line-height: 1.8;
+}
+
+.memory-dialog__body,
+.memory-dialog__response {
+  margin: 0;
+  color: rgba(247, 247, 241, 0.94);
+  font-family: "Songti SC", "STSong", Georgia, serif;
+  font-size: clamp(24px, 4vw, 38px);
+  line-height: 1.55;
+  letter-spacing: -0.03em;
+}
+
+.memory-dialog__consequence {
+  margin: 22px 0 0;
+  color: rgba(216, 220, 210, 0.52);
+  font-size: 13px;
+  line-height: 1.75;
+}
+
+.memory-dialog--cost .memory-dialog__eyebrow {
+  color: rgba(226, 158, 141, 0.66);
+}
+
+.memory-dialog--truth .memory-dialog__eyebrow {
+  color: rgba(226, 199, 143, 0.72);
+}
+
+.memory-dialog__choices {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 42px;
+}
+
+.memory-dialog__choices button {
+  min-height: 52px;
+  padding: 12px 16px;
+  border: 1px solid rgba(222, 235, 229, 0.17);
+  color: rgba(244, 247, 243, 0.84);
+  background: rgba(255, 255, 255, 0.035);
+  cursor: pointer;
+  transition: border-color 180ms ease, background 180ms ease;
+}
+
+.memory-dialog__choices button:hover,
+.memory-dialog__choices button:focus-visible {
+  border-color: rgba(113, 213, 199, 0.62);
+  background: rgba(79, 158, 149, 0.12);
+  outline: none;
+}
+
+.inventory-notice {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 30;
+  max-width: min(360px, calc(100vw - 40px));
+  padding: 12px 15px;
+  border: 1px solid rgba(115, 204, 191, 0.22);
+  color: rgba(224, 243, 237, 0.86);
+  background: rgba(5, 18, 19, 0.78);
+  box-shadow: 0 10px 36px rgba(0, 0, 0, 0.24);
+  backdrop-filter: blur(12px);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}
+
+.world-canvas {
+  transition: filter 260ms ease;
+}
+
+.world-shell::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 34;
+  background: rgba(4, 6, 7, 0.14);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 260ms ease, visibility 260ms ease;
+}
+
+.world-shell.has-world-chat::after {
+  opacity: 1;
+  visibility: visible;
+}
+
+.has-world-chat .world-canvas {
+  filter: brightness(0.84);
+}
+
+.world-chat {
+  position: fixed;
+  top: 18px;
+  bottom: 18px;
+  left: 18px;
+  z-index: 50;
+  width: min(390px, calc(100vw - 36px));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid rgba(225, 228, 219, 0.13);
+  border-radius: 10px;
+  color: rgba(239, 239, 231, 0.9);
+  background: rgba(24, 25, 24, 0.82);
+  box-shadow: 0 22px 80px rgba(0, 0, 0, 0.32);
+  backdrop-filter: blur(16px);
+}
+
+.world-chat[hidden] {
+  display: none;
+}
+
+.world-chat__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 22px 20px 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.world-chat__header h2 {
+  margin: 0;
+  font-family: "Songti SC", "STSong", Georgia, serif;
+  font-size: 19px;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+}
+
+.world-chat__header p {
+  margin: 7px 0 0;
+  color: rgba(225, 226, 216, 0.42);
+  font-size: 11px;
+}
+
+.world-chat__close {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 50%;
+  color: rgba(238, 238, 229, 0.54);
+  background: transparent;
+  font-size: 21px;
+  font-weight: 300;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.world-chat__close:hover,
+.world-chat__close:focus-visible {
+  border-color: rgba(255, 255, 255, 0.13);
+  color: rgba(255, 255, 248, 0.9);
+  outline: none;
+}
+
+.world-chat__messages {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 22px 20px 28px;
+  scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
+}
+
+.world-chat__message {
+  margin: 0 0 24px;
+}
+
+.world-chat__message p {
+  margin: 0;
+  font-family: "Songti SC", "STSong", Georgia, serif;
+  font-size: 16px;
+  line-height: 1.82;
+}
+
+.world-chat__message--assistant {
+  padding-right: 14px;
+  color: rgba(224, 226, 215, 0.78);
+}
+
+.world-chat__message--user {
+  padding-left: 34px;
+  color: rgba(252, 251, 243, 0.94);
+}
+
+.world-chat__message--narrator {
+  padding-right: 20px;
+  color: rgba(210, 211, 201, 0.43);
+}
+
+.world-chat__message--narrator p {
+  font-size: 13px;
+  font-style: italic;
+  line-height: 1.7;
+}
+
+.world-chat__message.is-error {
+  color: rgba(222, 169, 154, 0.72);
+}
+
+.world-chat__stream-cursor {
+  display: inline-block;
+  width: 4px;
+  height: 4px;
+  margin-left: 5px;
+  border-radius: 50%;
+  vertical-align: 0.16em;
+  background: rgba(209, 223, 211, 0.62);
+  animation: chat-cursor 1.1s ease-in-out infinite;
+}
+
+@keyframes chat-cursor {
+  50% {
+    opacity: 0.2;
+  }
+}
+
+.world-chat__restart-row {
+  padding: 0 20px 10px;
+}
+
+.world-chat__restart-row button {
+  padding: 0;
+  border: 0;
+  color: rgba(220, 221, 211, 0.4);
+  background: transparent;
+  font-size: 10px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.world-chat__composer {
+  flex: 0 0 auto;
+  padding: 15px 18px 17px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(10, 11, 11, 0.24);
+}
+
+.world-chat__composer textarea {
+  width: 100%;
+  min-height: 76px;
+  max-height: 180px;
+  resize: vertical;
+  padding: 0;
+  border: 0;
+  color: rgba(248, 247, 239, 0.9);
+  background: transparent;
+  font: 14px/1.65 inherit;
+  outline: none;
+}
+
+.world-chat__composer textarea::placeholder {
+  color: rgba(226, 225, 215, 0.3);
+}
+
+.world-chat__composer textarea:disabled {
+  opacity: 0.62;
+}
+
+.world-chat__error {
+  margin: 5px 0 10px;
+  color: rgba(224, 170, 154, 0.84);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.world-chat__composer-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 10px;
+}
+
+.world-chat__composer-foot > span {
+  color: rgba(220, 222, 213, 0.28);
+  font-size: 9px;
+}
+
+.world-chat__composer-foot > div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.world-chat__send,
+.world-chat__stop {
+  min-width: 56px;
+  padding: 7px 12px;
+  border: 1px solid rgba(230, 232, 223, 0.13);
+  border-radius: 999px;
+  color: rgba(241, 241, 233, 0.78);
+  background: rgba(255, 255, 255, 0.045);
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.world-chat__send:hover,
+.world-chat__stop:hover {
+  border-color: rgba(213, 222, 211, 0.3);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.world-chat__send:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.world-chat__stop {
+  color: rgba(226, 189, 177, 0.72);
+}
+
+.has-memory-dialog .crosshair,
+.has-memory-dialog .world-hint,
+.has-memory-dialog .water-indicator {
+  opacity: 0;
+}
+
+.fatal-page {
+  min-height: 100vh;
+  display: grid;
+  place-content: center;
+  padding: 30px;
+  text-align: center;
+  background: #0c0e0f;
+}
+
+.fatal-page h1 {
+  margin: 14px 0;
+  font-family: "Songti SC", "STSong", Georgia, serif;
+  font-weight: 400;
+}
+
+.fatal-page > p:not(.eyebrow) {
+  max-width: 620px;
+  color: #acb0b0;
+}
+
+.fatal-page a {
+  margin-top: 24px;
+  color: #e8ece8;
+}
+
+@media (max-width: 680px) {
+  .debug-panel {
+    top: 10px;
+    left: 10px;
+    width: calc(100vw - 20px);
+  }
+
+  .echo-progress {
+    top: 10px;
+    left: 10px;
+    width: calc(100vw - 20px);
+  }
+
+  .world-hint {
+    width: calc(100vw - 24px);
+    justify-content: center;
+    gap: 12px;
+  }
+
+  .water-indicator {
+    right: 12px;
+    bottom: 72px;
+  }
+
+  .memory-dialog__choices {
+    grid-template-columns: 1fr;
+  }
+
+  .world-chat {
+    top: max(8px, env(safe-area-inset-top));
+    bottom: max(8px, env(safe-area-inset-bottom));
+    left: 8px;
+    width: calc(100vw - 16px);
+    border-radius: 8px;
+  }
+
+  .world-chat__header {
+    padding: 18px 16px 14px;
+  }
+
+  .world-chat__messages {
+    padding: 18px 16px 24px;
+  }
+
+  .world-chat__composer {
+    padding: 13px 15px max(14px, env(safe-area-inset-bottom));
+  }
+}

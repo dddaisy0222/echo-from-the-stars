@@ -18,6 +18,7 @@ type EchoObject = {
 };
 
 type EchoWorld = {
+  source: "live" | "snapshot";
   worldName: string;
   identity: string;
   scene: string;
@@ -144,6 +145,7 @@ function mapMiroFishToEcho(
     "平行世界中的你";
 
   return {
+    source: "live",
     worldName: "MIROFISH GENERATED WORLD",
     identity: profileName,
     scene: "这一空间由 MiroFish 中真实运行过的 Agents、关系与时间线生成。",
@@ -155,6 +157,56 @@ function mapMiroFishToEcho(
       { name: "Agent Profile", meaning: "定义另一个自己如何理解世界、关系与风险。" },
       { name: "Timeline Log", meaning: "保存选择经过多轮互动后形成的连锁反应。" },
       { name: "World State", meaning: "让这个平行人生不是一次性回答，而是可以继续生长的状态。" },
+    ],
+  };
+}
+
+function buildSnapshotWorld(seed: string, context: string): EchoWorld {
+  const road = seed.replace(/[？?。.]$/, "");
+  return {
+    source: "snapshot",
+    worldName: "ECHO WORLD SNAPSHOT",
+    identity: "走进那条路之后的你",
+    scene: `这个房间保存着“${road}”继续发生五年后的三件人生证据。`,
+    quote: "我不是你错过的正确答案。我只是替你把那条路的代价也活了一遍。",
+    truth:
+      "世界变了，你反复在意的东西却没有变：被理解、拥有选择，也不愿失去真正重要的人。",
+    action:
+      "回到现实后，不复制这条人生；只从你羡慕它的部分里，拿走一个今天能完成的最小动作。",
+    events: [
+      {
+        year: "T+1",
+        title: "她真的推开了那扇门",
+        detail: `她不再需要想象“${road}”，新的城市和身份给了她重新定义自己的自由。`,
+        polarity: "gain",
+      },
+      {
+        year: "T+3",
+        title: "有些普通日子没有等她",
+        detail: `${context || "当时没走的理由"}并没有消失；得到另一种生活，也意味着错过此刻拥有的一部分关系。`,
+        polarity: "cost",
+      },
+      {
+        year: "T+5",
+        title: "她在深夜问了同一个问题",
+        detail:
+          "地点、工作和关系都变了，她依然在寻找被理解，也依然害怕自己的选择会辜负谁。",
+        polarity: "turn",
+      },
+    ],
+    objects: [
+      {
+        name: "一张没用过的登机牌",
+        meaning: "证明那条路确实有你向往的自由，而不代表它是正确答案。",
+      },
+      {
+        name: "一段没有接通的语音",
+        meaning: "每一种获得都伴随交换；平行人生也有不能同时拥有的东西。",
+      },
+      {
+        name: "一张写到一半的便签",
+        meaning: "换了世界仍然重复出现的渴望，才是这一生真正的问题。",
+      },
     ],
   };
 }
@@ -175,9 +227,11 @@ export default function MiroFishLab() {
     [phase],
   );
 
-  async function runMiroFish() {
+  async function runMiroFishLive() {
     setPhase("seed");
-    const health = await fetch("/health");
+    const health = await fetch("/health", {
+      signal: AbortSignal.timeout(2500),
+    });
     if (!health.ok) {
       throw new Error("MiroFish 服务尚未启动，请等待 Cowork 完成后端部署。");
     }
@@ -305,13 +359,28 @@ export default function MiroFishLab() {
     if (!Array.isArray(timeline) || timeline.length === 0) {
       throw new Error("MiroFish 已完成推演，但这次没有产生可用的人生事件。");
     }
-    setWorld(
-      mapMiroFishToEcho(
-        `${seed.trim()}\n${context.trim()}`,
-        timelinePayload,
-        profilesPayload,
-      ),
+    const generatedWorld = mapMiroFishToEcho(
+      `${seed.trim()}\n${context.trim()}`,
+      timelinePayload,
+      profilesPayload,
     );
+    setWorld(generatedWorld);
+    persistWorld(generatedWorld, seed.trim(), context.trim());
+    setPhase("done");
+  }
+
+  async function runSnapshotFallback() {
+    setPhase("seed");
+    await wait(380);
+    setPhase("agents");
+    await wait(460);
+    setPhase("timeline");
+    await wait(620);
+    setPhase("echo");
+    await wait(420);
+    const generatedWorld = buildSnapshotWorld(seed.trim(), context.trim());
+    setWorld(generatedWorld);
+    persistWorld(generatedWorld, seed.trim(), context.trim());
     setPhase("done");
   }
 
@@ -323,11 +392,25 @@ export default function MiroFishLab() {
     setError("");
     setWorld(null);
     try {
-      await runMiroFish();
+      await runMiroFishLive();
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "MiroFish 推演失败，请稍后重试。");
-      setPhase("error");
+      console.warn("[Echo] MiroFish Live 不可用，启用 World Snapshot", cause);
+      try {
+        await runSnapshotFallback();
+      } catch {
+        setError("这扇门暂时没有打开，请再试一次。");
+        setPhase("error");
+      }
     }
+  }
+
+  function enterWorld() {
+    if (!world) return;
+    ["gain", "cost", "truth"].forEach((id) => {
+      window.sessionStorage.removeItem(`echo.inventory.${id}`);
+    });
+    persistWorld(world, seed.trim(), context.trim());
+    window.location.assign("/world/");
   }
 
   const running = !["idle", "done", "error"].includes(phase);
@@ -345,7 +428,7 @@ export default function MiroFishLab() {
         </a>
         <span className={styles.badge}>
           <i className={styles.live} />
-          MIROFISH LIVE
+          MIROFISH · LIVE FIRST
         </span>
       </header>
 
@@ -486,6 +569,15 @@ export default function MiroFishLab() {
                 <h3>{world.truth}</h3>
                 <p>{world.action}</p>
               </div>
+
+              <button
+                className={styles.enterWorld}
+                type="button"
+                onClick={enterWorld}
+              >
+                <span>进入这间房，亲手找到三件证据</span>
+                <b>↗</b>
+              </button>
             </div>
           )}
         </section>
@@ -503,4 +595,21 @@ export default function MiroFishLab() {
       </footer>
     </main>
   );
+}
+
+function persistWorld(world: EchoWorld, seed: string, context: string) {
+  try {
+    window.localStorage.setItem(
+      "echo.worldState",
+      JSON.stringify({
+        ...world,
+        seed,
+        context,
+        cost: world.events.find((event) => event.polarity === "cost")?.detail,
+        savedAt: new Date().toISOString(),
+      }),
+    );
+  } catch (error) {
+    console.warn("[Echo] 世界状态未能保存", error);
+  }
 }
