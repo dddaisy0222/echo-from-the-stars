@@ -16,13 +16,13 @@ export async function generateMetadata(): Promise<Metadata> {
       title: "Echo｜Possible Worlds",
       description: "如果人生有另一条路，那里的你，过得好吗？",
       type: "website",
-      images: [{ url: `${origin}/og-v2.png`, width: 1536, height: 1024, alt: "Echo 平行世界叙事游戏" }],
+      images: [{ url: `${origin}/og.png`, width: 1536, height: 1024, alt: "Echo：一扇门通向没走过的人生" }],
     },
     twitter: {
       card: "summary_large_image",
       title: "Echo｜Possible Worlds",
       description: "如果人生有另一条路，那里的你，过得好吗？",
-      images: [`${origin}/og-v2.png`],
+      images: [`${origin}/og.png`],
     },
   };
 }
