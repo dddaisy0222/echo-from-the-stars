@@ -118,9 +118,10 @@
   gap: 6vw;
   overflow: hidden;
   isolation: isolate;
-  background-image: url("/echo-memory-room-v1.png");
-  background-size: cover;
-  background-position: center;
+  background:
+    radial-gradient(circle at 66% 38%, rgba(126, 159, 140, .22), transparent 27%),
+    radial-gradient(circle at 74% 72%, rgba(214, 183, 132, .13), transparent 32%),
+    linear-gradient(145deg, #203027 0%, #111a16 44%, #080d0b 100%);
 }
 
 .hero::before {
@@ -442,8 +443,8 @@
     inset 0 0 38px rgba(232, 197, 143, .1);
   position: relative;
   background:
-    linear-gradient(rgba(18, 28, 23, .28), rgba(18, 28, 23, .5)),
-    url("/echo-memory-room-v1.png") 64% center / auto 470px;
+    radial-gradient(circle at 60% 35%, rgba(232, 197, 143, .18), transparent 36%),
+    linear-gradient(155deg, rgba(88, 126, 107, .32), rgba(10, 17, 14, .78));
 }
 
 .portal::after {

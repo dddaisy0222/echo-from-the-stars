@@ -1,7 +1,5 @@
 import * as THREE from 'three'
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import { SparkRenderer, SplatMesh } from '@sparkjsdev/spark'
-import RAPIER from '@dimforge/rapier3d-compat'
 import { CharacterHotspot } from './CharacterHotspot.js'
 import { MemoryHotspot } from './MemoryHotspot.js'
 import {
@@ -97,7 +95,7 @@ class MarbleWorld {
           <dl>
             <div><dt>SPZ</dt><dd data-debug-spz>等待中</dd></div>
             <div><dt>COLLIDER</dt><dd data-debug-collider>等待中</dd></div>
-            <div><dt>RAPIER</dt><dd data-debug-rapier>等待中</dd></div>
+            <div><dt>BOUNDARY</dt><dd data-debug-rapier>等待中</dd></div>
             <div><dt>POSITION</dt><dd data-debug-position>—</dd></div>
             <div><dt>GROUNDED</dt><dd data-debug-grounded>false</dd></div>
             <div><dt>SPEED</dt><dd data-debug-speed>0.00 m/s</dd></div>
@@ -322,17 +320,7 @@ class MarbleWorld {
 
   async initializeWorld() {
     this.setLoadPhase('正在准备时间的物理规则', 0.08)
-    await RAPIER.init()
-    this.debugFields.rapier.textContent = `就绪 · ${RAPIER.version()}`
-
-    this.physicsWorld = new RAPIER.World({
-      x: 0,
-      y: PHYSICS_CONFIG.gravity,
-      z: 0,
-    })
-    this.physicsWorld.timestep = PHYSICS_CONFIG.fixedTimeStep
-    this.physicsWorld.numSolverIterations = 6
-
+    this.debugFields.rapier.textContent = '轻量边界 · 就绪'
     this.createPlayerPhysics()
 
     this.setLoadPhase('正在唤醒记忆中的光线', 0.16)
@@ -342,9 +330,6 @@ class MarbleWorld {
     const colliderPromise = this.loadColliderWorld()
 
     await Promise.all([splatPromise, colliderPromise])
-    // Rapier 的 character controller 依赖 broad phase 查询。静态 trimesh 全部创建后
-    // 先执行一次物理步，确保第一次角色移动前查询结构已经包含房间碰撞体。
-    this.physicsWorld.step()
     this.logSpawnFloorProbe()
     this.resetPlayer()
     this.updateDebugPanel()
@@ -357,43 +342,9 @@ class MarbleWorld {
   }
 
   createPlayerPhysics() {
-    const capsuleHalfHeight =
-      (PLAYER_CONFIG.totalHeight - PLAYER_CONFIG.radius * 2) / 2
-
-    const bodyDesc = RAPIER.RigidBodyDesc.kinematicPositionBased()
-      .setTranslation(...SPAWN_POINT.position)
-      .setCanSleep(false)
-    this.playerBody = this.physicsWorld.createRigidBody(bodyDesc)
-
-    const colliderDesc = RAPIER.ColliderDesc.capsule(
-      capsuleHalfHeight,
-      PLAYER_CONFIG.radius,
-    )
-      .setFriction(0)
-      .setRestitution(0)
-    this.playerCollider = this.physicsWorld.createCollider(
-      colliderDesc,
-      this.playerBody,
-    )
-
-    this.characterController = this.physicsWorld.createCharacterController(
-      PHYSICS_CONFIG.controllerOffset,
-    )
-    this.characterController.setUp({ x: 0, y: 1, z: 0 })
-    this.characterController.setSlideEnabled(true)
-    this.characterController.enableSnapToGround(PHYSICS_CONFIG.snapToGround)
-    this.characterController.enableAutostep(
-      PHYSICS_CONFIG.autostepHeight,
-      PHYSICS_CONFIG.autostepMinWidth,
-      false,
-    )
-    this.characterController.setMaxSlopeClimbAngle(
-      PHYSICS_CONFIG.maxSlopeClimbAngle,
-    )
-    this.characterController.setMinSlopeSlideAngle(
-      PHYSICS_CONFIG.minSlopeSlideAngle,
-    )
-    this.characterController.setApplyImpulsesToDynamicBodies(false)
+    this.playerPosition = new THREE.Vector3(...SPAWN_POINT.position)
+    this.playerPosition.y = PLAYER_CONFIG.totalHeight / 2
+    this.isGrounded = true
   }
 
   async loadSplat() {
@@ -424,113 +375,41 @@ class MarbleWorld {
   }
 
   async loadColliderWorld() {
-    const loader = new GLTFLoader()
-    const gltf = await loader.loadAsync(ASSET_URLS.collider, (event) => {
-      if (!event.total) return
-      const ratio = event.loaded / event.total
-      this.setLoadPhase(
-        `正在辨认房间的边界 · ${Math.round(ratio * 100)}%`,
-        0.2 + ratio * 0.22,
+    const boundaries = [
+      { name: 'floor', half: [5.8, 0.08, 7.4], position: [0, -0.08, 0.8] },
+      { name: 'north-wall', half: [5.8, 2.5, 0.08], position: [0, 2.5, -6.15] },
+      { name: 'south-wall', half: [5.8, 2.5, 0.08], position: [0, 2.5, 8.15] },
+      { name: 'west-wall', half: [0.08, 2.5, 7.2], position: [-5.7, 2.5, 1] },
+      { name: 'east-wall', half: [0.08, 2.5, 7.2], position: [5.7, 2.5, 1] },
+    ]
+
+    boundaries.forEach((boundary) => {
+      this.colliderCount += 1
+
+      const debugMesh = new THREE.Mesh(
+        new THREE.BoxGeometry(
+          boundary.half[0] * 2,
+          boundary.half[1] * 2,
+          boundary.half[2] * 2,
+        ),
+        new THREE.MeshBasicMaterial({
+          color: DEBUG_CONFIG.debugColor,
+          transparent: true,
+          opacity: 0.16,
+          wireframe: true,
+          depthWrite: false,
+        }),
       )
+      debugMesh.name = `debug:${boundary.name}`
+      debugMesh.position.fromArray(boundary.position)
+      debugMesh.visible = this.colliderDebugVisible
+      this.scene.add(debugMesh)
+      this.debugMeshes.push(debugMesh)
     })
 
-    this.colliderVisualRoot = gltf.scene
-    this.colliderVisualRoot.name = 'bedroom-collider.glb'
-    this.colliderVisualRoot.visible = false
-    this.worldRoot.add(this.colliderVisualRoot)
-    this.worldRoot.updateMatrixWorld(true)
-
-    const meshTasks = []
-    this.colliderVisualRoot.traverse((object) => {
-      if (object.isMesh && object.geometry?.attributes?.position) {
-        meshTasks.push(this.createTrimeshCollider(object))
-      }
-    })
-
-    await Promise.all(meshTasks)
-    this.debugFields.collider.textContent = `加载成功 · ${this.colliderCount} 个`
+    this.debugFields.collider.textContent = `轻量边界 · ${this.colliderCount} 个`
     this.debugFields.count.textContent = String(this.colliderCount)
-    console.info('[Echo] collider GLB 加载成功', {
-      colliderCount: this.colliderCount,
-      debugVisible: this.colliderDebugVisible,
-    })
-  }
-
-  async createTrimeshCollider(mesh) {
-    const geometry = mesh.geometry.clone()
-    geometry.applyMatrix4(mesh.matrixWorld)
-
-    const position = geometry.getAttribute('position')
-    const vertices = new Float32Array(position.count * 3)
-    for (let index = 0; index < position.count; index += 1) {
-      vertices[index * 3] = position.getX(index)
-      vertices[index * 3 + 1] = position.getY(index)
-      vertices[index * 3 + 2] = position.getZ(index)
-    }
-
-    const sourceIndices = geometry.index
-      ? Uint32Array.from(geometry.index.array)
-      : Uint32Array.from({ length: position.count }, (_, index) => index)
-
-    const analysis = analyzeAndFilterTriangles(vertices, sourceIndices)
-    const bounds = new THREE.Box3().setFromBufferAttribute(
-      new THREE.Float32BufferAttribute(vertices, 3),
-    )
-
-    if (analysis.suspiciousArea >= DEBUG_CONFIG.suspiciousHorizontalArea) {
-      console.warn('[Echo] 发现可疑水平碰撞层', JSON.stringify({
-        mesh: mesh.name || '(未命名 Mesh)',
-        bounds: serializeBox(bounds),
-        suspiciousArea: Number(analysis.suspiciousArea.toFixed(3)),
-        removedTriangles: analysis.removedTriangles,
-        waterFilter: WATER_CONFIG.waterSurfaceFilter,
-      }))
-    } else {
-      console.info('[Echo] collider mesh 分析', JSON.stringify({
-        mesh: mesh.name || '(未命名 Mesh)',
-        bounds: serializeBox(bounds),
-        triangles: analysis.indices.length / 3,
-      }))
-    }
-
-    if (analysis.indices.length < 3) {
-      throw new Error(`碰撞网格 ${mesh.name || '(未命名)'} 过滤后没有有效三角形`)
-    }
-
-    const fixedBody = this.physicsWorld.createRigidBody(
-      RAPIER.RigidBodyDesc.fixed(),
-    )
-    const descriptor = RAPIER.ColliderDesc.trimesh(
-      vertices,
-      analysis.indices,
-    ).setFriction(PHYSICS_CONFIG.colliderFriction)
-    this.physicsWorld.createCollider(descriptor, fixedBody)
-    this.colliderCount += 1
-
-    const debugGeometry = new THREE.BufferGeometry()
-    debugGeometry.setAttribute(
-      'position',
-      new THREE.Float32BufferAttribute(vertices, 3),
-    )
-    debugGeometry.setIndex(new THREE.BufferAttribute(analysis.indices, 1))
-    const debugMesh = new THREE.Mesh(
-      debugGeometry,
-      new THREE.MeshBasicMaterial({
-        color: DEBUG_CONFIG.debugColor,
-        transparent: true,
-        opacity: 0.22,
-        wireframe: true,
-        depthTest: true,
-        depthWrite: false,
-      }),
-    )
-    debugMesh.name = `debug:${mesh.name || 'collider'}`
-    debugMesh.visible = this.colliderDebugVisible
-    debugMesh.frustumCulled = false
-    this.scene.add(debugMesh)
-    this.debugMeshes.push(debugMesh)
-
-    geometry.dispose()
+    this.setLoadPhase('房间边界已经稳定', 0.42)
   }
 
   animate = (time = performance.now()) => {
@@ -567,7 +446,7 @@ class MarbleWorld {
 
   updatePlayer(deltaTime) {
     const input = this.getMovementInput()
-    const bodyPosition = this.playerBody.translation()
+    const bodyPosition = this.playerPosition
     const capsuleBottom =
       bodyPosition.y - PLAYER_CONFIG.totalHeight / 2
     this.isInWater =
@@ -599,46 +478,19 @@ class MarbleWorld {
       rate * deltaTime,
     )
 
-    if (this.isGrounded && this.verticalVelocity < 0) {
-      this.verticalVelocity = -0.5
-    } else {
-      this.verticalVelocity = Math.max(
-        this.verticalVelocity + PHYSICS_CONFIG.gravity * deltaTime,
-        PHYSICS_CONFIG.maxFallSpeed,
-      )
-    }
-
-    const desiredMovement = {
-      x: this.horizontalVelocity.x * deltaTime,
-      y: this.verticalVelocity * deltaTime,
-      z: this.horizontalVelocity.y * deltaTime,
-    }
-
-    this.characterController.computeColliderMovement(
-      this.playerCollider,
-      desiredMovement,
+    const current = this.playerPosition
+    current.x = THREE.MathUtils.clamp(
+      current.x + this.horizontalVelocity.x * deltaTime,
+      -5.35,
+      5.35,
     )
-    const corrected = this.characterController.computedMovement()
-    this.isGrounded = this.characterController.computedGrounded()
-
-    if (this.isGrounded && this.verticalVelocity < 0) {
-      this.verticalVelocity = 0
-    } else if (
-      Math.abs(corrected.y) < Math.abs(desiredMovement.y) * 0.2 &&
-      this.verticalVelocity > 0
-    ) {
-      this.verticalVelocity = 0
-    }
-
-    const nextPosition = {
-      x: bodyPosition.x + corrected.x,
-      y: bodyPosition.y + corrected.y,
-      z: bodyPosition.z + corrected.z,
-    }
-    this.playerBody.setNextKinematicTranslation(nextPosition)
-    this.physicsWorld.step()
-
-    const current = this.playerBody.translation()
+    current.z = THREE.MathUtils.clamp(
+      current.z + this.horizontalVelocity.y * deltaTime,
+      -5.8,
+      7.8,
+    )
+    current.y = PLAYER_CONFIG.totalHeight / 2
+    this.isGrounded = true
     this.playerRoot.position.set(current.x, current.y, current.z)
     this.updateHeadBob(deltaTime)
     this.updateFootsteps(deltaTime)
@@ -746,17 +598,16 @@ class MarbleWorld {
   }
 
   resetPlayer() {
-    if (!this.playerBody) return
+    if (!this.playerPosition) return
     const [x, y, z] = SPAWN_POINT.position
-    this.playerBody.setTranslation({ x, y, z }, true)
-    this.playerBody.setNextKinematicTranslation({ x, y, z })
-    this.playerRoot.position.set(x, y, z)
+    const floorY = PLAYER_CONFIG.totalHeight / 2
+    this.playerPosition.set(x, floorY, z)
+    this.playerRoot.position.set(x, floorY, z)
     this.playerRoot.rotation.set(0, SPAWN_POINT.yaw, 0)
     this.pitchRoot.rotation.set(0, 0, 0)
     this.verticalVelocity = 0
     this.horizontalVelocity.set(0, 0)
-    this.isGrounded = false
-    this.physicsWorld?.propagateModifiedBodyPositionsToColliders()
+    this.isGrounded = true
   }
 
   setInteractionPaused(paused) {
@@ -859,33 +710,10 @@ class MarbleWorld {
   }
 
   logSpawnFloorProbe() {
-    const [x, y, z] = SPAWN_POINT.position
-    const ray = new RAPIER.Ray(
-      { x, y: y + 2, z },
-      { x: 0, y: -1, z: 0 },
-    )
-    const hit = this.physicsWorld.castRay(
-      ray,
-      20,
-      true,
-      undefined,
-      undefined,
-      this.playerCollider,
-      this.playerBody,
-    )
-    const result = hit
-      ? {
-          hit: true,
-          timeOfImpact: Number(hit.timeOfImpact.toFixed(3)),
-          floorY: Number((y + 2 - hit.timeOfImpact).toFixed(3)),
-        }
-      : { hit: false }
-    console.info('[Echo] 出生点地板射线', JSON.stringify(result))
-    if (!hit) {
-      console.warn(
-        '[Echo] 出生点正下方没有检测到碰撞面，请调整 SPAWN_POINT 或 WORLD_TRANSFORM',
-      )
-    }
+    console.info('[Echo] 轻量房间边界就绪', {
+      floorY: 0,
+      spawnPoint: SPAWN_POINT.position,
+    })
   }
 
   toggleColliderDebug() {
@@ -914,8 +742,8 @@ class MarbleWorld {
   }
 
   updateDebugPanel() {
-    if (!this.playerBody || !this.panelVisible) return
-    const position = this.playerBody.translation()
+    if (!this.playerPosition || !this.panelVisible) return
+    const position = this.playerPosition
     this.debugFields.position.textContent =
       `${position.x.toFixed(2)}, ${position.y.toFixed(2)}, ${position.z.toFixed(2)}`
     this.debugFields.grounded.textContent = String(this.isGrounded)

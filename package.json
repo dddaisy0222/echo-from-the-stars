@@ -16,7 +16,6 @@
     "db:generate": "drizzle-kit generate"
   },
   "dependencies": {
-    "@dimforge/rapier3d-compat": "^0.19.3",
     "@sparkjsdev/spark": "^2.1.0",
     "drizzle-orm": "0.45.2",
     "next": "16.2.6",

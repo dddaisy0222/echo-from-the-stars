@@ -1,18 +1,34 @@
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
+import { copyFileSync, mkdirSync } from "node:fs";
+import { join } from "node:path";
 import { fileURLToPath, URL } from "node:url";
 
 const coworkRoot = fileURLToPath(
   new URL("./cowork-mirofish-lab", import.meta.url),
 );
+const projectRoot = fileURLToPath(new URL(".", import.meta.url));
+const coworkOut = fileURLToPath(new URL("./dist-cowork", import.meta.url));
 
 export default defineConfig({
   root: coworkRoot,
-  publicDir: fileURLToPath(new URL("./public", import.meta.url)),
+  publicDir: false,
   base: "./",
-  plugins: [react()],
+  plugins: [
+    react(),
+    {
+      name: "echo-cowork-assets",
+      writeBundle() {
+        mkdirSync(join(coworkOut, "world"), { recursive: true });
+        copyFileSync(
+          join(projectRoot, "public", "world", "bedroom.spz"),
+          join(coworkOut, "world", "bedroom.spz"),
+        );
+      },
+    },
+  ],
   build: {
-    outDir: fileURLToPath(new URL("./dist-cowork", import.meta.url)),
+    outDir: coworkOut,
     emptyOutDir: true,
     rollupOptions: {
       input: {
