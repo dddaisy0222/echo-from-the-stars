@@ -1,6 +1,6 @@
 export const ASSET_URLS = Object.freeze({
-  splat: '/world/bedroom.spz',
-  collider: '/world/bedroom-collider.glb',
+  splat: 'bedroom.spz',
+  collider: 'bedroom-collider.glb',
 })
 
 // SPZ 和 collider 都挂在同一个 worldRoot 下。方向、比例或位置需要校准时，

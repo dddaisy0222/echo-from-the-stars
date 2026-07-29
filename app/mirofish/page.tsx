@@ -410,7 +410,7 @@ export default function MiroFishLab() {
       window.sessionStorage.removeItem(`echo.inventory.${id}`);
     });
     persistWorld(world, seed.trim(), context.trim());
-    window.location.assign("/world/");
+    window.location.assign(new URL("world/", window.location.href).toString());
   }
 
   const running = !["idle", "done", "error"].includes(phase);
