@@ -324,7 +324,7 @@ class MarbleWorld {
     document.addEventListener('keyup', this.handleKeyUp)
     this.enterButton.addEventListener('click', this.requestPointerLock)
     this.returnButton.addEventListener('click', () => {
-      window.location.href = '/?returned=1'
+      window.location.href = new URL('../?returned=1', window.location.href).toString()
     })
     this.renderer.domElement.addEventListener('click', this.requestPointerLock)
     this.handleUnhandledRejection = (event) => {

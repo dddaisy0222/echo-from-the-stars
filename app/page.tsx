@@ -672,7 +672,11 @@ export default function Home() {
     setIsGenerating(false);
     setGenerationNote("");
     setReturnNote("");
-    window.history.replaceState({}, "", "/");
+    window.history.replaceState(
+      {},
+      "",
+      new URL("./", window.location.href).toString(),
+    );
   }
 
   const stageIndex: Record<Stage, number> = {

@@ -1,6 +1,12 @@
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
-import { copyFileSync, mkdirSync } from "node:fs";
+import {
+  copyFileSync,
+  cpSync,
+  mkdirSync,
+  readFileSync,
+  writeFileSync,
+} from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath, URL } from "node:url";
 
@@ -23,6 +29,40 @@ export default defineConfig({
         copyFileSync(
           join(projectRoot, "public", "echo-memory-room-v1.png"),
           join(coworkOut, "echo-memory-room-v1.png"),
+        );
+        copyFileSync(
+          join(projectRoot, "public", "world", "bedroom.spz"),
+          join(coworkOut, "world", "bedroom.spz"),
+        );
+        copyFileSync(
+          join(projectRoot, "public", "world", "bedroom-collider.glb"),
+          join(coworkOut, "world", "bedroom-collider.glb"),
+        );
+        for (const runtimeFile of [
+          "server.mjs",
+          "install.sh",
+          "start.sh",
+          "health.sh",
+        ]) {
+          copyFileSync(
+            join(projectRoot, "cowork-runtime", runtimeFile),
+            join(coworkOut, runtimeFile),
+          );
+        }
+
+        // CoWork injects an app-root <base> tag. The world page therefore
+        // needs root-relative-to-that-base asset tags, while the duplicate
+        // directory keeps the same build working in ordinary local hosting.
+        cpSync(join(coworkOut, "assets"), join(coworkOut, "world", "assets"), {
+          recursive: true,
+        });
+        const worldHtmlPath = join(coworkOut, "world", "index.html");
+        writeFileSync(
+          worldHtmlPath,
+          readFileSync(worldHtmlPath, "utf8").replaceAll(
+            "../assets/",
+            "./assets/",
+          ),
         );
       },
     },
