@@ -18,11 +18,22 @@ test("ships the complete Echo journey and world handoff", async () => {
   assert.match(page, /另一个你，已经在这里生活了五年/);
   assert.match(page, /localStorage\.setItem\("echo\.worldState"/);
   assert.match(worker, /url\.pathname === "\/api\/chat"/);
+  assert.match(worker, /url\.pathname === "\/api\/world"/);
   assert.match(worker, /REDNOTE_API_KEY/);
-  assert.match(world, /世界记住了你的选择/);
-  assert.match(world, /上一幕仍在发生/);
-  assert.match(world, /\/api\/chat/);
-  assert.match(world, /\/\?returned=1/);
+  assert.match(page, /\/api\/world/);
+  assert.match(world, /mountMarbleWorld/);
+  const marbleWorld = await readFile(
+    new URL("app/world/engine/MarbleWorld.js", root),
+    "utf8",
+  );
+  const chatPanel = await readFile(
+    new URL("app/world/engine/components/WorldChatPanel.js", root),
+    "utf8",
+  );
+  assert.match(marbleWorld, /SplatMesh/);
+  assert.match(marbleWorld, /createMemoryObjects/);
+  assert.match(marbleWorld, /\/\?returned=1/);
+  assert.match(chatPanel, /\/api\/chat/);
 });
 
 test("does not commit model credentials into the product source", async () => {

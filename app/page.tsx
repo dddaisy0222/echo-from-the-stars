@@ -49,7 +49,7 @@ type WorldScene = {
 };
 
 type WorldState = {
-  version: 2;
+  version: number;
   seed: string;
   context: string;
   truth: string;
@@ -449,6 +449,20 @@ function buildWorldState(
   };
 }
 
+function isWorldState(value: unknown): value is WorldState {
+  if (!value || typeof value !== "object") return false;
+  const state = value as Partial<WorldState>;
+  return (
+    typeof state.seed === "string" &&
+    typeof state.truth === "string" &&
+    typeof state.action === "string" &&
+    Array.isArray(state.events) &&
+    state.events.length >= 3 &&
+    Array.isArray(state.scenes) &&
+    state.scenes.length >= 3
+  );
+}
+
 export default function Home() {
   const [stage, setStage] = useState<Stage>("arrival");
   const [profile, setProfile] = useState<Profile>(emptyProfile);
@@ -460,6 +474,8 @@ export default function Home() {
   const [draft, setDraft] = useState("");
   const [isListening, setIsListening] = useState(false);
   const [worldState, setWorldState] = useState<WorldState | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generationNote, setGenerationNote] = useState("");
   const [returnNote, setReturnNote] = useState("");
   const recognitionRef = useRef<{ stop?: () => void } | null>(null);
 
@@ -572,12 +588,46 @@ export default function Home() {
     setIsListening(true);
   }
 
-  function generateDoor() {
-    const nextWorld = buildWorldState(profile, timeline, mode, answers);
+  async function generateDoor() {
+    if (isGenerating) return;
+    setIsGenerating(true);
+    setGenerationNote("Echo 正在让这条人生先生活五年……");
+
+    let nextWorld = buildWorldState(profile, timeline, mode, answers);
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 22_000);
+    try {
+      const response = await fetch("/api/world", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
+        body: JSON.stringify({
+          profile,
+          timeline,
+          mode,
+          answers,
+        }),
+      });
+      if (response.ok) {
+        const payload = (await response.json()) as { world?: unknown };
+        if (isWorldState(payload.world)) nextWorld = payload.world;
+      } else {
+        setGenerationNote("模型暂时没有抵达，已用 Echo 的因果规则完成生成。");
+      }
+    } catch {
+      setGenerationNote("模型暂时没有抵达，已用 Echo 的因果规则完成生成。");
+    } finally {
+      window.clearTimeout(timeout);
+    }
+
     setWorldState(nextWorld);
     window.localStorage.setItem("echo.worldState", JSON.stringify(nextWorld));
+    ["gain", "cost", "truth"].forEach((id) =>
+      window.sessionStorage.removeItem(`echo.inventory.${id}`),
+    );
     window.sessionStorage.removeItem("echo.chat.messages.echo-childhood-self");
     setStage("door");
+    setIsGenerating(false);
   }
 
   function openWorld() {
@@ -619,6 +669,8 @@ export default function Home() {
     setInterviewStep(0);
     setDraft("");
     setWorldState(null);
+    setIsGenerating(false);
+    setGenerationNote("");
     setReturnNote("");
     window.history.replaceState({}, "", "/");
   }
@@ -977,12 +1029,18 @@ export default function Home() {
             >
               有些地方不对，我来修改
             </button>
-            <button className="primary-cta" type="button" onClick={generateDoor}>
-              对，就是这条人生 <span>→</span>
+            <button
+              className="primary-cta"
+              type="button"
+              onClick={generateDoor}
+              disabled={isGenerating}
+            >
+              {isGenerating ? "正在生成另一条人生…" : "对，就是这条人生"} <span>→</span>
             </button>
           </div>
           <p className="simulation-note">
-            Echo 生成的是一种受现实事实约束、会被你持续校正的人生模拟，不是未来预测。
+            {generationNote ||
+              "Echo 生成的是一种受现实事实约束、会被你持续校正的人生模拟，不是未来预测。"}
           </p>
         </section>
       )}

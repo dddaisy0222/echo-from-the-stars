@@ -31,6 +31,7 @@ class MarbleWorld {
     this.container = container
     this.keys = new Set()
     this.isPointerLocked = false
+    this.usesFallbackControls = false
     this.isReady = false
     this.isInteractionPaused = false
     this.isGrounded = false
@@ -254,6 +255,7 @@ class MarbleWorld {
     }
 
     this.handlePointerLockChange = () => {
+      if (this.usesFallbackControls) return
       this.isPointerLocked = document.pointerLockElement === this.renderer.domElement
       this.loadingOverlay.classList.toggle(
         'is-paused',
@@ -301,12 +303,17 @@ class MarbleWorld {
 
     this.requestPointerLock = async () => {
       if (!this.isReady || this.isInteractionPaused) return
+      if (this.usesFallbackControls) {
+        this.enterFallbackControls()
+        return
+      }
       try {
         await this.ensureAudio()
         await this.renderer.domElement.requestPointerLock()
       } catch (error) {
-        console.error('[Echo] 无法锁定鼠标', error)
-        this.loadingDetail.textContent = `无法锁定鼠标：${error.message}`
+        console.warn('[Echo] 当前容器不支持锁定鼠标，已启用兼容操控')
+        this.usesFallbackControls = true
+        this.enterFallbackControls()
       }
     }
 
@@ -324,6 +331,16 @@ class MarbleWorld {
       console.error('[Echo] 未处理的 Promise rejection', event.reason)
     }
     window.addEventListener('unhandledrejection', this.handleUnhandledRejection)
+  }
+
+  enterFallbackControls() {
+    this.isPointerLocked = true
+    this.loadingOverlay.classList.remove('is-paused')
+    this.worldHint.classList.add('is-visible')
+    this.loadingStatus.textContent = '房间已经想起你了'
+    this.loadingDetail.textContent = 'WASD 行走 · 移动鼠标观察 · E 触碰回声'
+    this.keys.clear()
+    this.renderer.domElement.focus?.()
   }
 
   async initializeWorld() {
@@ -687,6 +704,7 @@ class MarbleWorld {
         z: playerPosition.z,
       },
       collectedItems,
+      previousChoices: readPreviousChoices(),
     }
   }
 
@@ -774,6 +792,19 @@ class MarbleWorld {
     this.loadingProgress.style.transform = 'scaleX(1)'
     this.loadingProgress.style.background = '#ff735e'
     this.enterButton.hidden = true
+  }
+}
+
+function readPreviousChoices() {
+  try {
+    const records = JSON.parse(localStorage.getItem('echo.choiceRecords') || '[]')
+    if (!Array.isArray(records)) return []
+    return records
+      .slice(0, 12)
+      .map((record) => record?.label)
+      .filter((label) => typeof label === 'string' && label.trim())
+  } catch {
+    return []
   }
 }
 
