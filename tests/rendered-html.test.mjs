@@ -19,7 +19,8 @@ test("ships the complete Echo journey and world handoff", async () => {
   assert.match(page, /localStorage\.setItem\("echo\.worldState"/);
   assert.match(worker, /url\.pathname === "\/api\/chat"/);
   assert.match(worker, /REDNOTE_API_KEY/);
-  assert.match(world, /人生证据/);
+  assert.match(world, /世界记住了你的选择/);
+  assert.match(world, /上一幕仍在发生/);
   assert.match(world, /\/api\/chat/);
   assert.match(world, /\/\?returned=1/);
 });

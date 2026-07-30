@@ -24,12 +24,32 @@ type Profile = {
 };
 
 type WorldEvent = {
+  time: string;
   title: string;
   detail: string;
   polarity: "gain" | "cost" | "turn";
 };
 
+type WorldChoice = {
+  id: string;
+  label: string;
+  reveals: string;
+};
+
+type WorldScene = {
+  id: string;
+  time: string;
+  place: string;
+  title: string;
+  atmosphere: string;
+  situation: string;
+  choicePrompt: string;
+  choices: WorldChoice[];
+  evidence: WorldEvent;
+};
+
 type WorldState = {
+  version: 2;
   seed: string;
   context: string;
   truth: string;
@@ -39,6 +59,17 @@ type WorldState = {
   profile: Profile;
   answers: string[];
   events: WorldEvent[];
+  fixedFacts: string[];
+  changedVariable: string;
+  centralTension: string;
+  userModel: {
+    desires: string[];
+    fears: string[];
+    attachments: string[];
+    hypothesis: string;
+    confidence: number;
+  };
+  scenes: WorldScene[];
 };
 
 type Prompt = {
@@ -224,20 +255,42 @@ function buildWorldState(
         ? answers[2]
         : "那段时间终究会继续向前";
 
+  const desire =
+    mode === "decide"
+      ? answers[2] || "让生活重新拥有选择"
+      : mode === "replay"
+        ? answers[3] || "重新感到生活正在发生"
+        : answers[3] || "走向那条没有保证的路";
+  const fear =
+    mode === "decide"
+      ? answers[3] || "失去现在拥有的确定感"
+      : mode === "rewrite"
+        ? answers[2] || "辜负重要的人，也害怕自己不够好"
+        : "知道这段时间终究会结束";
+  const alternative =
+    mode === "rewrite"
+      ? answers[3] || "做出另一个选择"
+      : mode === "decide"
+        ? answers[1] || "选择其中一条路"
+        : answers[0] || "重新回到那段时间";
+
   const events: WorldEvent[] =
     mode === "replay"
       ? [
           {
+            time: "第一幕 · 回到那一天",
             title: answers[2] || "熟悉的声音先回来了",
             detail: `你回到「${answers[1] || answers[0]}」。世界没有要求你修正过去，只让那些曾被时间压扁的细节重新出现。`,
             polarity: "gain",
           },
           {
+            time: "第二幕 · 时间继续走",
             title: "你知道这一刻仍然会结束",
             detail: "能够重返，不等于能够留下。正因为知道它会结束，你终于没有把这一天活成背景。",
             polarity: "cost",
           },
           {
+            time: "第三幕 · 离开以前",
             title: "记忆没有要求你住在过去",
             detail: `你真正想带回的不是旧日完整复刻，而是「${expectation || "一种很久没有认真感受过的东西"}」。`,
             polarity: "turn",
@@ -245,23 +298,118 @@ function buildWorldState(
         ]
       : [
           {
-            title: `你真的走进了「${mode === "decide" ? answers[1] : answers[3]}」`,
-            detail: `最初的改变很具体：${expectation || "生活第一次出现了不同的节奏"}。这不是奖励，只是那条路真实给你的东西。`,
+            time: "第一幕 · 出发后的第一个晚上",
+            title: `你真的走进了「${alternative}」`,
+            detail: `房间里还有没拆完的箱子。手机同时亮起两条消息：一个来自新生活，一个来自你没能一起带来的人。最初的自由很具体，也第一次完全由你承担。`,
             polarity: "gain",
           },
           {
+            time: "第二幕 · 第 312 天",
             title: "第 312 天，一个普通的晚上",
-            detail: `新的生活也开始索取代价：${cost || "一些熟悉的确定感没有跟来"}。平行世界不是更好的人生，只是一组不同的交换。`,
+            detail: `你已经能熟练地过这里的生活。新的生活也开始索取代价：${cost || fear}。平行世界不是更好的人生，只是一组不同的交换。`,
             polarity: "cost",
           },
           {
+            time: "第三幕 · 第五年",
             title: "五年后，同一个问题换了一种问法",
             detail: `外部条件改变了，但你仍在意当初为什么出发。你想问她：「${answers[4] || "你现在过得好吗？"}」`,
             polarity: "turn",
           },
         ];
 
+  const scenes: WorldScene[] =
+    mode === "replay"
+      ? [
+          {
+            id: "arrival",
+            time: events[0].time,
+            place: answers[1] || answers[0] || "记忆里的那个地方",
+            title: "你先听见了熟悉的声音",
+            atmosphere: `${answers[2] || "那个只属于当时的细节"}重新出现，时间没有倒带的噪音，一切只是继续发生。`,
+            situation: "那时的你就在不远处，还不知道这一天后来会被记住这么久。",
+            choicePrompt: "这一次，你想先做什么？",
+            choices: [
+              { id: "stay", label: "什么也不改变，只认真待在这一刻", reveals: "你开始注意到当年忽略的细节。" },
+              { id: "approach", label: "走近那时的自己", reveals: "她抬头看你，像认出一个很久以后的念头。" },
+            ],
+            evidence: events[0],
+          },
+          {
+            id: "passing",
+            time: events[1].time,
+            place: "同一个地方 · 天色变暗以前",
+            title: "你知道它仍然会结束",
+            atmosphere: "钟表仍然向前，熟悉的人会离开房间，灯也会按原来的时间熄灭。",
+            situation: "你不能把任何人带走，但可以决定最后把注意力放在哪里。",
+            choicePrompt: "离开以前，你想把什么看清？",
+            choices: [
+              { id: "person", label: "好好看一眼那个舍不得的人", reveals: "你终于记起了对方当时的神情，而不只是后来失去的感觉。" },
+              { id: "self", label: "看着当时的自己", reveals: "你发现她并没有你记忆里那么无忧无虑。" },
+            ],
+            evidence: events[1],
+          },
+          {
+            id: "meeting",
+            time: events[2].time,
+            place: "门再次出现的地方",
+            title: "过去把一样东西交还给你",
+            atmosphere: "房间没有挽留你。那段生活只把一个仍然有效的部分放在门边。",
+            situation: `那时的你问：“${answers[4] || "你后来有好好生活吗？"}”`,
+            choicePrompt: "你准备怎么回答？",
+            choices: [
+              { id: "honest", label: "诚实告诉她，后来并不总是容易", reveals: "她没有失望，只是点了点头。" },
+              { id: "promise", label: "告诉她，你会把一种感觉带回去", reveals: "门后的光第一次照向现在。" },
+            ],
+            evidence: events[2],
+          },
+        ]
+      : [
+          {
+            id: "arrival",
+            time: events[0].time,
+            place: mode === "rewrite" ? alternative : "选择发生后的新生活",
+            title: "抵达后的第一个晚上",
+            atmosphere: "纸箱还没有拆完，窗外的城市不像想象中那么浪漫。手机同时亮起两条消息。",
+            situation: "一条来自新同事：“明早的方案方便今晚先看一眼吗？” 另一条来自家里：“到了吗？有空回个电话。”",
+            choicePrompt: "今晚，你先回应谁？",
+            choices: [
+              { id: "work", label: "先回复新同事，把第一步站稳", reveals: "你迅速获得了新团队的信任；家里的通话被推迟到第二天。" },
+              { id: "home", label: "先给家里打电话", reveals: "你听见熟悉的声音，也第一次承认自己其实很害怕。" },
+            ],
+            evidence: events[0],
+          },
+          {
+            id: "exchange",
+            time: events[1].time,
+            place: "第 312 天 · 一次重要机会之前",
+            title: "新的生活开始向你索取东西",
+            atmosphere: "你已熟练地穿过这座城市。桌上放着一份会改变未来两年的邀请，手机里还有一条很久没回复的语音。",
+            situation: `你得到了一部分「${desire}」，也越来越清楚它并不会自动解决「${fear}」。`,
+            choicePrompt: "这一次，你要把时间给谁？",
+            choices: [
+              { id: "accelerate", label: "接下机会，再向前一步", reveals: "你的名字开始被更多人知道；一些普通的晚上从日历里消失了。" },
+              { id: "repair", label: "停下来，修复一段正在变远的关系", reveals: "你错过了最快的上升，却第一次没有让忙碌替自己作答。" },
+            ],
+            evidence: events[1],
+          },
+          {
+            id: "meeting",
+            time: events[2].time,
+            place: "第五年 · 她独自待着的房间",
+            title: "你终于见到了沿这条路生活的自己",
+            atmosphere: "她身边有你羡慕的东西，也留下了几件从照片里看不出来的遗憾。",
+            situation: `她已经知道你要问：“${answers[4] || "你后悔吗？"}”`,
+            choicePrompt: "见到她以后，你先看什么？",
+            choices: [
+              { id: "achievement", label: "看她终于拥有的东西", reveals: "那些成果是真的，但没有替她回答所有问题。" },
+              { id: "ordinary", label: "看她如何度过一个普通晚上", reveals: "真正让你共情的不是高光，而是她也会犹豫、孤独和想家。" },
+            ],
+            evidence: events[2],
+          },
+        ];
+
   return {
+    version: 2,
     seed,
     context:
       mode === "replay"
@@ -280,6 +428,24 @@ function buildWorldState(
     profile,
     answers,
     events,
+    fixedFacts: [
+      `现实中的你最终选择：${answers[1] || "当前这条生活"}`,
+      `你当时/现在的真实顾虑：${fear}`,
+      `${profile.identity || "你现在的身份"}与已有关系不会凭空消失`,
+    ],
+    changedVariable: alternative,
+    centralTension: mode === "replay" ? "怀念与继续生活" : `${desire} 与 ${fear}`,
+    userModel: {
+      desires: [desire],
+      fears: [fear],
+      attachments: [profile.hometown || "熟悉的生活", "重要的人与已有关系"],
+      hypothesis:
+        mode === "replay"
+          ? "你想回去的也许不是某个年代，而是当时仍能被你清楚感受到的生活。"
+          : "你反复想象另一条路，也许不是因为它更完美，而是它替你保存了主动选择的感觉。",
+      confidence: 0.68,
+    },
+    scenes,
   };
 }
 
