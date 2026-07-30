@@ -8,7 +8,7 @@ test("ships the complete Echo journey and world handoff", async () => {
   const [page, worker, world] = await Promise.all([
     readFile(new URL("app/page.tsx", root), "utf8"),
     readFile(new URL("worker/index.ts", root), "utf8"),
-    readFile(new URL("app/world/engine/MarbleWorld.js", root), "utf8"),
+    readFile(new URL("app/world/page.tsx", root), "utf8"),
   ]);
 
   assert.match(page, /降临在这个世界/);
@@ -19,7 +19,8 @@ test("ships the complete Echo journey and world handoff", async () => {
   assert.match(page, /localStorage\.setItem\("echo\.worldState"/);
   assert.match(worker, /url\.pathname === "\/api\/chat"/);
   assert.match(worker, /REDNOTE_API_KEY/);
-  assert.match(world, /createMemoryObjects\(this\.worldState\)/);
+  assert.match(world, /人生证据/);
+  assert.match(world, /\/api\/chat/);
   assert.match(world, /\/\?returned=1/);
 });
 

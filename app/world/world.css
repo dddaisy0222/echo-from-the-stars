@@ -876,3 +876,481 @@ a {
     padding: 13px 15px max(14px, env(safe-area-inset-bottom));
   }
 }
+/* Lightweight interactive world used by the deployed experience. */
+.memory-world {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  color: #f4f0e6;
+  background: #101713;
+  font-family: "Avenir Next", "PingFang SC", system-ui, sans-serif;
+}
+
+.memory-scene {
+  position: absolute;
+  inset: -2%;
+  background:
+    linear-gradient(90deg, rgba(4, 9, 7, .45), transparent 55%),
+    url("/echo-memory-room-v1.png") center/cover no-repeat;
+  filter: saturate(.86) brightness(.88);
+  transform: scale(1.03);
+  transition: transform 2.2s ease, filter 1.2s ease;
+}
+
+.memory-world.is-entered .memory-scene {
+  filter: saturate(.96) brightness(.98);
+  transform: scale(1);
+}
+
+.memory-vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at center, transparent 35%, rgba(2, 7, 5, .35) 100%),
+    linear-gradient(0deg, rgba(3, 8, 6, .55), transparent 35%);
+}
+
+.world-intro {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  padding: 30px;
+  text-align: center;
+  background: rgba(4, 10, 8, .73);
+  backdrop-filter: blur(15px);
+}
+
+.world-intro > p,
+.world-mission small,
+.parallel-chat header small,
+.evidence-dialog > p {
+  color: rgba(230, 197, 134, .75);
+  font: 9px ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: .21em;
+}
+
+.world-intro h1 {
+  max-width: 710px;
+  margin: 22px 0 13px;
+  font: 400 clamp(34px, 5vw, 65px)/1.24 "Songti SC", "STSong", Georgia, serif;
+  letter-spacing: -.04em;
+}
+
+.world-intro > span {
+  max-width: 620px;
+  color: rgba(244, 240, 230, .55);
+  font: 15px/1.8 "Songti SC", "STSong", Georgia, serif;
+}
+
+.world-intro > button,
+.keep-evidence {
+  min-width: 230px;
+  min-height: 52px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 32px;
+  padding: 0 20px;
+  border: 1px solid rgba(230, 197, 134, .55);
+  color: #f4f0e6;
+  background: rgba(230, 197, 134, .09);
+  cursor: pointer;
+}
+
+.world-intro > button:hover,
+.keep-evidence:hover {
+  color: #17130c;
+  background: #e6c586;
+}
+
+.world-intro > small {
+  margin-top: 15px;
+  color: rgba(244, 240, 230, .32);
+  font-size: 9px;
+  letter-spacing: .1em;
+}
+
+.world-mission,
+.world-exit {
+  position: fixed;
+  top: 20px;
+  z-index: 12;
+  padding: 14px 16px;
+  border: 1px solid rgba(244, 240, 230, .14);
+  background: rgba(6, 14, 11, .68);
+  backdrop-filter: blur(14px);
+}
+
+.world-mission {
+  left: 20px;
+  width: min(280px, calc(100vw - 40px));
+}
+
+.world-mission strong {
+  display: block;
+  margin: 8px 0 4px;
+  font: 400 21px "Songti SC", serif;
+}
+
+.world-mission p {
+  margin: 0;
+  color: rgba(244, 240, 230, .48);
+  font-size: 10px;
+  line-height: 1.55;
+}
+
+.world-exit {
+  right: 20px;
+  display: grid;
+  gap: 3px;
+  color: rgba(244, 240, 230, .75);
+  cursor: pointer;
+  text-align: left;
+}
+
+.world-exit:hover {
+  border-color: rgba(230, 197, 134, .5);
+}
+
+.world-exit span {
+  font-size: 10px;
+}
+
+.world-exit small {
+  color: rgba(230, 197, 134, .55);
+  font-size: 8px;
+}
+
+.memory-point {
+  position: absolute;
+  z-index: 8;
+  width: 110px;
+  display: grid;
+  justify-items: center;
+  gap: 7px;
+  border: 0;
+  color: #f5ead1;
+  background: transparent;
+  cursor: pointer;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, .75);
+}
+
+.memory-point i {
+  position: absolute;
+  width: 54px;
+  height: 54px;
+  border: 1px solid rgba(230, 197, 134, .27);
+  border-radius: 50%;
+  animation: point-ring 2.2s ease-in-out infinite;
+}
+
+.memory-point > span {
+  z-index: 2;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(244, 240, 230, .5);
+  border-radius: 50%;
+  background: rgba(7, 16, 13, .72);
+  font: 17px "Songti SC", serif;
+  box-shadow: 0 0 28px rgba(230, 197, 134, .24);
+}
+
+.memory-point small {
+  margin-top: 8px;
+  font-size: 9px;
+  line-height: 1.45;
+}
+
+.memory-point:hover {
+  transform: translateY(-3px);
+}
+
+.memory-point.is-collected {
+  color: rgba(169, 216, 199, .8);
+}
+
+.memory-point.is-collected i {
+  display: none;
+}
+
+.point-gain { left: 19%; top: 56%; }
+.point-cost { right: 18%; top: 65%; }
+.point-turn { left: 52%; top: 41%; }
+
+@keyframes point-ring {
+  0%, 100% { opacity: .3; transform: scale(.8); }
+  50% { opacity: 1; transform: scale(1.22); }
+}
+
+.evidence-dialog {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  z-index: 30;
+  width: min(520px, calc(100vw - 30px));
+  padding: 37px;
+  border: 1px solid rgba(230, 197, 134, .28);
+  background: rgba(7, 15, 12, .92);
+  box-shadow: 0 35px 130px rgba(0, 0, 0, .58);
+  backdrop-filter: blur(22px);
+  transform: translate(-50%, -50%);
+}
+
+.dialog-close {
+  position: absolute;
+  right: 17px;
+  top: 12px;
+  border: 0;
+  color: rgba(244, 240, 230, .5);
+  background: transparent;
+  cursor: pointer;
+  font-size: 25px;
+}
+
+.evidence-dialog h2 {
+  margin: 20px 0 14px;
+  font: 400 clamp(27px, 3.6vw, 40px)/1.3 "Songti SC", serif;
+}
+
+.evidence-dialog blockquote {
+  margin: 0;
+  color: rgba(244, 240, 230, .62);
+  font: 14px/1.85 "Songti SC", serif;
+}
+
+.evidence-object {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 27px 0 0;
+  padding: 14px;
+  border: 1px solid rgba(244, 240, 230, .12);
+}
+
+.evidence-object > span {
+  width: 37px;
+  height: 37px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(230, 197, 134, .4);
+  border-radius: 50%;
+  color: #e6c586;
+  font: 21px "Songti SC", serif;
+}
+
+.evidence-object small {
+  display: block;
+  color: rgba(244, 240, 230, .35);
+  font-size: 8px;
+  letter-spacing: .14em;
+}
+
+.evidence-object strong {
+  display: block;
+  margin-top: 4px;
+  font: 400 13px "Songti SC", serif;
+}
+
+.keep-evidence {
+  width: 100%;
+  margin-top: 18px;
+}
+
+.parallel-reflection {
+  position: absolute;
+  z-index: 10;
+  left: 50%;
+  bottom: 7%;
+  display: grid;
+  justify-items: center;
+  border: 0;
+  color: #edf5ed;
+  background: transparent;
+  cursor: pointer;
+  transform: translateX(-50%);
+}
+
+.reflection-body {
+  width: 58px;
+  height: 108px;
+  margin-bottom: 12px;
+  border-radius: 50% 50% 35% 35%;
+  background:
+    radial-gradient(circle at 50% 17%, rgba(226, 245, 236, .6) 0 18%, transparent 20%),
+    radial-gradient(ellipse at 50% 70%, rgba(164, 217, 200, .4), transparent 66%);
+  filter: blur(3px);
+  opacity: .7;
+  transform: scaleY(.56);
+  transform-origin: bottom;
+  animation: reflection-breathe 3s ease-in-out infinite;
+}
+
+.parallel-reflection strong {
+  font: 400 14px "Songti SC", serif;
+}
+
+.parallel-reflection small {
+  margin-top: 5px;
+  color: rgba(169, 216, 199, .7);
+  font-size: 9px;
+}
+
+@keyframes reflection-breathe {
+  50% { opacity: .92; transform: scaleY(.6) scaleX(1.08); }
+}
+
+.parallel-chat {
+  position: fixed;
+  inset: 0 0 0 auto;
+  z-index: 40;
+  width: min(520px, 100vw);
+  display: grid;
+  grid-template-rows: auto 1fr auto auto;
+  padding: 28px;
+  border-left: 1px solid rgba(244, 240, 230, .16);
+  background: rgba(6, 14, 11, .94);
+  box-shadow: -30px 0 110px rgba(0, 0, 0, .5);
+  backdrop-filter: blur(23px);
+}
+
+.parallel-chat header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgba(244, 240, 230, .11);
+}
+
+.parallel-chat header h2 {
+  margin: 7px 0 0;
+  font: 400 25px "Songti SC", serif;
+}
+
+.parallel-chat header button {
+  border: 0;
+  color: rgba(244, 240, 230, .55);
+  background: transparent;
+  cursor: pointer;
+  font-size: 27px;
+}
+
+.parallel-messages {
+  overflow-y: auto;
+  padding: 24px 2px;
+}
+
+.parallel-messages article {
+  max-width: 84%;
+  margin: 0 0 19px;
+}
+
+.parallel-messages article.message-you {
+  margin-left: auto;
+  text-align: right;
+}
+
+.parallel-messages small {
+  color: rgba(230, 197, 134, .46);
+  font-size: 8px;
+}
+
+.parallel-messages p {
+  margin: 6px 0 0;
+  padding: 13px 15px;
+  border: 1px solid rgba(244, 240, 230, .1);
+  color: rgba(244, 240, 230, .77);
+  background: rgba(255, 255, 255, .025);
+  font: 13px/1.75 "Songti SC", serif;
+  text-align: left;
+}
+
+.message-you p {
+  border-color: rgba(230, 197, 134, .18);
+  background: rgba(230, 197, 134, .07);
+}
+
+.is-thinking {
+  opacity: .55;
+}
+
+.parallel-chat form {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  border: 1px solid rgba(244, 240, 230, .15);
+}
+
+.parallel-chat textarea {
+  min-height: 78px;
+  resize: none;
+  padding: 13px;
+  border: 0;
+  color: #f4f0e6;
+  background: transparent;
+  outline: none;
+}
+
+.parallel-chat form button {
+  align-self: stretch;
+  min-width: 78px;
+  border: 0;
+  border-left: 1px solid rgba(244, 240, 230, .12);
+  color: #15120d;
+  background: #e6c586;
+  cursor: pointer;
+}
+
+.parallel-chat form button:disabled {
+  cursor: not-allowed;
+  opacity: .35;
+}
+
+.bring-back {
+  margin-top: 11px;
+  padding: 11px;
+  border: 0;
+  color: rgba(169, 216, 199, .65);
+  background: transparent;
+  cursor: pointer;
+  font-size: 9px;
+  letter-spacing: .08em;
+}
+
+@media (max-width: 700px) {
+  .memory-scene {
+    background-position: 61% center;
+  }
+
+  .world-mission {
+    top: 12px;
+    left: 12px;
+    width: 210px;
+  }
+
+  .world-exit {
+    top: auto;
+    right: 12px;
+    bottom: 12px;
+  }
+
+  .point-gain { left: 9%; top: 52%; }
+  .point-cost { right: 4%; top: 64%; }
+  .point-turn { left: 48%; top: 37%; }
+
+  .memory-point {
+    width: 88px;
+  }
+
+  .memory-point small {
+    display: none;
+  }
+
+  .parallel-chat {
+    padding: 20px;
+  }
+}
