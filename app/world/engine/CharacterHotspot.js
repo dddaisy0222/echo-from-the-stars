@@ -21,7 +21,7 @@ export class CharacterHotspot {
     this.getWorldContext = getWorldContext
     this.onDialogOpen = onDialogOpen
     this.onDialogClose = onDialogClose
-    this.character = echoChildhoodSelf
+    this.character = createCharacterFromWorld(echoChildhoodSelf)
     this.isInRange = false
     this.revealAmount = 0
 
@@ -181,6 +181,25 @@ export class CharacterHotspot {
         object.material?.dispose()
       }
     })
+  }
+}
+
+function createCharacterFromWorld(baseCharacter) {
+  try {
+    const state = JSON.parse(localStorage.getItem('echo.worldState') || '{}')
+    const name = state?.profile?.name
+    const firstQuestion = state?.answers?.[4]
+    return {
+      ...baseCharacter,
+      displayName: name ? `五年后的${name}` : '沿另一条路生活的你',
+      openingNarration:
+        '你找到三件证据后，水里的倒影终于抬起头。她没有比你更正确，只是比你多活过了这条路的五年。',
+      openingLine: firstQuestion
+        ? `你终于来了。我知道你想问：“${firstQuestion}” 你可以亲口问我。`
+        : '你终于来了。这里和你想象的一样吗？',
+    }
+  } catch {
+    return { ...baseCharacter }
   }
 }
 

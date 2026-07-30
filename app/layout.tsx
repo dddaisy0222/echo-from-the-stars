@@ -11,18 +11,18 @@ export async function generateMetadata(): Promise<Metadata> {
 
   return {
     metadataBase: new URL(origin),
-    title: "Echo｜Possible Worlds",
-    description: "写下一个困住你的问题，穿越四条世界线，与做出不同选择的自己对话。",
+    title: "Echo｜人生的第二层",
+    description: "推开一扇门，进入那条没有走过、却已经替你生活了五年的人生。",
     openGraph: {
-      title: "Echo｜Possible Worlds",
-      description: "如果人生有另一条路，那里的你，过得好吗？",
+      title: "Echo｜人生的第二层",
+      description: "另一条人生不是空白。另一个你，已经在那里生活了五年。",
       type: "website",
       images: [{ url: `${origin}/og.png`, width: 1536, height: 1024, alt: "Echo：一扇门通向没走过的人生" }],
     },
     twitter: {
       card: "summary_large_image",
-      title: "Echo｜Possible Worlds",
-      description: "如果人生有另一条路，那里的你，过得好吗？",
+      title: "Echo｜人生的第二层",
+      description: "推开一扇门，去见那个已经替你生活了五年的自己。",
       images: [`${origin}/og.png`],
     },
   };

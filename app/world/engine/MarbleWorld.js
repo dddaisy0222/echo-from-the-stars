@@ -109,6 +109,10 @@ class MarbleWorld {
           <strong><span data-echo-progress-count>0</span> / 3</strong>
           <p data-echo-progress-copy>找到这条人生得到、失去与未改变的东西</p>
         </div>
+        <button class="world-return" type="button" data-return-now>
+          <span>离开这条时间线</span>
+          <small>带着证据回到现在 ↗</small>
+        </button>
         <div class="echo-awakening" data-echo-awakening hidden>
           <small>THE ECHO IS HERE</small>
           <p>水面里的倒影，没有跟着你动。</p>
@@ -133,6 +137,7 @@ class MarbleWorld {
     this.progressCount = this.container.querySelector('[data-echo-progress-count]')
     this.progressCopy = this.container.querySelector('[data-echo-progress-copy]')
     this.awakeningNotice = this.container.querySelector('[data-echo-awakening]')
+    this.returnButton = this.container.querySelector('[data-return-now]')
     this.debugFields = {
       spz: this.container.querySelector('[data-debug-spz]'),
       collider: this.container.querySelector('[data-debug-collider]'),
@@ -311,6 +316,9 @@ class MarbleWorld {
     document.addEventListener('keydown', this.handleKeyDown)
     document.addEventListener('keyup', this.handleKeyUp)
     this.enterButton.addEventListener('click', this.requestPointerLock)
+    this.returnButton.addEventListener('click', () => {
+      window.location.href = '/?returned=1'
+    })
     this.renderer.domElement.addEventListener('click', this.requestPointerLock)
     this.handleUnhandledRejection = (event) => {
       console.error('[Echo] 未处理的 Promise rejection', event.reason)

@@ -36,7 +36,7 @@ export default function WorldPage() {
         <p className="eyebrow">ECHO / WORLD ERROR</p>
         <h1>无法进入那年的房间</h1>
         <p>{error}</p>
-        <a href="/mirofish">返回世界入口</a>
+        <a href="/">返回世界入口</a>
       </main>
     );
   }
