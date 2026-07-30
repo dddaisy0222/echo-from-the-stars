@@ -21,8 +21,8 @@ export default defineConfig({
       writeBundle() {
         mkdirSync(join(coworkOut, "world"), { recursive: true });
         copyFileSync(
-          join(projectRoot, "public", "world", "bedroom.spz"),
-          join(coworkOut, "world", "bedroom.spz"),
+          join(projectRoot, "public", "echo-memory-room-v1.png"),
+          join(coworkOut, "echo-memory-room-v1.png"),
         );
       },
     },

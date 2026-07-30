@@ -415,7 +415,8 @@ export default function Home() {
   }
 
   function openWorld() {
-    window.location.href = "/world";
+    window.location.href =
+      import.meta.env.BASE_URL === "./" ? "./world/" : "/world";
   }
 
   function loadDemo() {

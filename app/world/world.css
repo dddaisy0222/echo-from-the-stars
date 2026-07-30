@@ -889,9 +889,9 @@ a {
 .memory-scene {
   position: absolute;
   inset: -2%;
-  background:
-    linear-gradient(90deg, rgba(4, 9, 7, .45), transparent 55%),
-    url("/echo-memory-room-v1.png") center/cover no-repeat;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
   filter: saturate(.86) brightness(.88);
   transform: scale(1.03);
   transition: transform 2.2s ease, filter 1.2s ease;

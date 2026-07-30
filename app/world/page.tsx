@@ -126,6 +126,10 @@ export default function WorldPage() {
     setChatOpen(true);
   }
 
+  function returnToNow() {
+    window.location.href = new URL("../?returned=1", window.location.href).toString();
+  }
+
   async function sendMessage(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const message = draft.trim();
@@ -178,7 +182,17 @@ export default function WorldPage() {
 
   return (
     <main className={`memory-world ${entered ? "is-entered" : ""}`}>
-      <div className="memory-scene" aria-hidden="true" />
+      <div
+        className="memory-scene"
+        aria-hidden="true"
+        style={{
+          backgroundImage: `linear-gradient(90deg, rgba(4, 9, 7, .45), transparent 55%), url("${
+            import.meta.env.BASE_URL === "./"
+              ? "../echo-memory-room-v1.png"
+              : "/echo-memory-room-v1.png"
+          }")`,
+        }}
+      />
       <div className="memory-vignette" aria-hidden="true" />
 
       {!entered && (
@@ -208,9 +222,7 @@ export default function WorldPage() {
           <button
             className="world-exit"
             type="button"
-            onClick={() => {
-              window.location.href = "/?returned=1";
-            }}
+            onClick={returnToNow}
           >
             <span>离开这条时间线</span>
             <small>带着证据回到现在 ↗</small>
@@ -310,9 +322,7 @@ export default function WorldPage() {
           <button
             className="bring-back"
             type="button"
-            onClick={() => {
-              window.location.href = "/?returned=1";
-            }}
+            onClick={returnToNow}
           >
             结束对话，带一件东西回到现实
           </button>
