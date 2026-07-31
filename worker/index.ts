@@ -131,7 +131,7 @@ async function handleWorldGeneration(
   const instructions = `
 你是 Echo 的 Causal World Compiler。Echo 不是算命、人格测试或未来预测，而是把一个真实人生选择推演成可进入的“可能人生”。
 
-请依据用户提供的事实，只改变一个关键变量，生成一条已经生活了五年的平行人生。你必须同时写出得到、代价与始终没变的东西；不能生成爽文，不能把人格类型当作确定事实，不能替用户做决定。
+请依据用户提供的事实，只改变一个关键变量，初始化一条可持续推进的平行时间线。本次只生成从岔路到用户指定观察节点之间的三个连续体验节点，不把观察节点当作结局；不能生成爽文，不能把人格类型当作确定事实，不能替用户做决定。
 
 生成原则：
 1. 事实约束：现实选择、当时的恐惧、牵挂、资源与身份不会凭空消失。
@@ -144,6 +144,9 @@ async function handleWorldGeneration(
 8. Few-shot 只教结构，不提供当前用户事实。先抽取共同起点、岔路时刻、固定反事实、不变量、观察节点、未知变量与用户可控的微观选择，再为当前 Case 重新生成。
 9. 不得把其他案例的公司、城市、工资、父母同住、同事年龄、轮岗、行业评价或情绪结论复制进当前世界。
 10. 世界没有固定五年终点。观察节点可以是今天、一年、五年、十年或用户指定节点；时间越远，不确定性越高，且每次只推进一个有因果来源的节点。
+11. 第一节点必须从共同起点和固定平行选择开始；第二节点呈现该选择第一次与现实条件发生摩擦；第三节点抵达用户指定观察节点并进入开放对话。
+12. 每个节点提供两个用户可控的微观行动。选项不能控制组织、他人或关系必然成功，也不能让用户重新撤销已经固定的宏观岔路。
+13. 如果用户是刚毕业选 Offer，现实路径与平行路径是从同一起点分开；严禁写成先进入现实公司、再离职去平行公司。
 
 跨领域迁移示例：
 - 校招 Offer：共同起点是毕业后的第一次就业；若现实选择 A、平行选择 B，不得写成从 A 离职再去 B。轮岗、住房、工资和岗位选择权必须有来源。
@@ -156,8 +159,8 @@ async function handleWorldGeneration(
   "version": 3,
   "seed": "一句清楚描述唯一改变变量的话",
   "context": "两句解释为什么模拟这条人生",
-  "truth": "一句暂时的发现，不能定义用户",
-  "action": "一句今天能做的微小行动",
+  "truth": "这个观察节点上仍未解决的一句张力，不能定义用户",
+  "action": "一句说明时间线仍可继续推进的话，不替用户行动",
   "fixedFacts": ["3条现实不变量"],
   "changedVariable": "唯一改变变量",
   "centralTension": "A 与 B",
@@ -169,9 +172,9 @@ async function handleWorldGeneration(
     "confidence": 0.0
   },
   "events": [
-    {"time":"第一幕时间","title":"具体证据标题","detail":"具体发生与因果","polarity":"gain"},
-    {"time":"第二幕时间","title":"具体证据标题","detail":"具体发生与因果","polarity":"cost"},
-    {"time":"第三幕时间","title":"具体证据标题","detail":"具体发生与因果","polarity":"turn"}
+    {"time":"岔路时刻","title":"固定选择开始发生","detail":"共同起点与第一个可体验场景","polarity":"gain"},
+    {"time":"中间节点","title":"选择第一次碰到现实","detail":"具体发生与连续因果","polarity":"cost"},
+    {"time":"用户指定观察节点","title":"共感态转入开放对话","detail":"当前状态与仍未解决的问题","polarity":"turn"}
   ],
   "scenes": [
     {
@@ -203,11 +206,11 @@ async function handleWorldGeneration(
 时间方向：${timeline}
 
 五轮对话：
-1. ${answers[0]}
-2. ${answers[1]}
-3. ${answers[2]}
-4. ${answers[3]}
-5. ${answers[4]}
+1. 共同起点与岔路时间：${answers[0]}
+2. 现实中的选择：${answers[1]}
+3. 本世界固定发生的平行选择：${answers[2]}
+4. 当时未选择它的理由与不能消失的现实条件：${answers[3]}
+5. 本次想先生活到的观察节点：${answers[4]}
 `;
 
   try {
@@ -588,6 +591,16 @@ function normalizeWorld(
     },
     events: cleanEvents,
     scenes: cleanScenes,
+    persistentTimeline: {
+      forkMoment: source.answers[0],
+      sharedOrigin: source.answers[0],
+      realPath: source.answers[1],
+      counterfactualPath: source.answers[2],
+      observationTarget: source.answers[4],
+      currentHorizon: "fork",
+      status: "active",
+      experiencedNodes: [],
+    },
   };
 
   if (

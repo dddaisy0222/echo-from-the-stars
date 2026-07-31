@@ -72,9 +72,12 @@ export class MemoryHotspot {
 
     this.mount.append(this.prompt, this.dialog, this.inventoryNotice)
     this.handleDialogClick = (event) => {
+      const choice = event.target.closest('button[data-world-choice]')
+        ?.dataset.worldChoice
       const action = event.target.closest('button[data-memory-action]')
         ?.dataset.memoryAction
-      if (action === 'take') this.collect()
+      if (choice) this.collect(choice)
+      if (action === 'take') this.collect('continue')
       if (action === 'leave') this.closeDialog()
     }
     this.dialog.addEventListener('click', this.handleDialogClick)
@@ -119,10 +122,16 @@ export class MemoryHotspot {
         <p class="memory-dialog__eyebrow">${escapeHtml(this.memory.chapter)}</p>
         <p class="memory-dialog__narration">${escapeHtml(this.memory.name)}</p>
         <p class="memory-dialog__body">“${escapeHtml(this.memory.reveal)}”</p>
-        <p class="memory-dialog__consequence">${escapeHtml(this.memory.consequence)}</p>
+        <p class="memory-dialog__consequence">${escapeHtml(this.memory.choicePrompt || this.memory.consequence)}</p>
         <div class="memory-dialog__choices memory-dialog__choices--final">
-          <button type="button" data-memory-action="take">记住这件事</button>
-          <button type="button" data-memory-action="leave">暂时放回原处</button>
+          ${(this.memory.choices || [])
+            .map(
+              (choice) =>
+                `<button type="button" data-world-choice="${escapeHtml(choice.id)}">${escapeHtml(choice.label)}</button>`,
+            )
+            .join('') ||
+            '<button type="button" data-memory-action="take">继续经历</button>'}
+          <button type="button" data-memory-action="leave">先离开这一幕</button>
         </div>
       </div>
     `
@@ -137,11 +146,17 @@ export class MemoryHotspot {
     this.onDialogClose?.()
   }
 
-  collect() {
+  collect(choiceId = 'continue') {
+    const choice = (this.memory.choices || []).find(
+      (item) => item.id === choiceId,
+    )
     const item = {
       id: this.memory.id,
       name: this.memory.name,
       role: this.memory.role,
+      choiceId,
+      choiceLabel: choice?.label || '继续经历',
+      consequence: choice?.reveals || this.memory.consequence,
       collectedAt: new Date().toISOString(),
     }
     try {

@@ -748,6 +748,7 @@ class MarbleWorld {
   collectMemory(item) {
     this.collectedMemories.add(item.id)
     rememberWorldEvidence(item)
+    rememberTimelineChoice(this.worldState, item)
     this.updateProgress()
 
     if (this.collectedMemories.size === this.memoryHotspots.length) {
@@ -805,6 +806,13 @@ class MarbleWorld {
     const answers = Array.isArray(this.worldState.answers)
       ? this.worldState.answers
       : []
+    const timeline = readPersistentTimeline(this.worldState)
+    const experiencedChoices = Array.isArray(timeline.experiencedNodes)
+      ? timeline.experiencedNodes.map(
+          (node) =>
+            `${node.choiceLabel || '继续经历'}：${node.consequence || '结果仍在展开'}`,
+        )
+      : []
     return {
       sceneId: this.manifest.id,
       sceneDescription:
@@ -817,18 +825,34 @@ class MarbleWorld {
         z: playerPosition.z,
       },
       collectedItems,
-      previousChoices: readPreviousChoices(),
+      previousChoices: [
+        ...readPreviousChoices(),
+        ...experiencedChoices,
+      ],
       sharedOrigin,
-      parallelMemories,
+      parallelMemories: [
+        ...parallelMemories,
+        ...experiencedChoices.map((item) => `这条时间线已经发生：${item}`),
+      ],
       otherPath: {
         knownAtFork: [
-          answers[0] ? `用户当时面对的选择是：${answers[0]}` : '',
-          answers[1] ? `用户在现实中记录的选择是：${answers[1]}` : '',
+          timeline.sharedOrigin
+            ? `共同起点：${timeline.sharedOrigin}`
+            : '',
+          timeline.realPath
+            ? `用户在现实中选择：${timeline.realPath}`
+            : answers[1]
+              ? `用户在现实中记录的选择是：${answers[1]}`
+              : '',
+          timeline.counterfactualPath
+            ? `我在这个世界选择：${timeline.counterfactualPath}`
+            : '',
         ].filter(Boolean),
         userDisclosures: [],
         knownUnknowns: [
           '岔路之后，现实中的用户具体经历了什么，除非用户亲口披露，否则未知。',
           '平行自我对现实路径的想象不是事实，只能作为反事实投射表达。',
+          `当前只生活到：${timeline.currentHorizon || timeline.observationTarget || '本次观察节点'}；之后仍未发生。`,
         ],
       },
     }
@@ -932,6 +956,18 @@ function readPreviousChoices() {
   } catch {
     return []
   }
+}
+
+function readPersistentTimeline(worldState) {
+  try {
+    const stored = JSON.parse(
+      localStorage.getItem('echo.persistentTimeline.v1') || 'null',
+    )
+    if (stored && typeof stored === 'object') return stored
+  } catch {
+    // Fall through to the world snapshot.
+  }
+  return worldState.persistentTimeline || {}
 }
 
 function escapeHtml(value) {
@@ -1044,6 +1080,7 @@ function createMemoryObjects(worldState) {
   const cost = events.find((event) => event.polarity === 'cost') || events[1]
   const turn = events.find((event) => event.polarity === 'turn') || events[2]
 
+  const scenes = Array.isArray(worldState.scenes) ? worldState.scenes : []
   return [
     {
       id: 'gain',
@@ -1055,6 +1092,8 @@ function createMemoryObjects(worldState) {
         gain?.detail ||
         '她得到了你一直想象的自由，也第一次可以不向任何人解释自己。',
       consequence: '这不是奖品。它只证明：那条路确实有你向往的东西。',
+      choicePrompt: scenes[0]?.choicePrompt,
+      choices: scenes[0]?.choices || [],
     },
     {
       id: 'cost',
@@ -1066,6 +1105,8 @@ function createMemoryObjects(worldState) {
         cost?.detail ||
         '在她获得另一种生活时，现在这条路上的一些人和普通日子也没有等她。',
       consequence: '平行世界不是更好的版本，只是一组不同的交换。',
+      choicePrompt: scenes[1]?.choicePrompt,
+      choices: scenes[1]?.choices || [],
     },
     {
       id: 'truth',
@@ -1078,6 +1119,38 @@ function createMemoryObjects(worldState) {
         turn?.detail ||
         '不论走到哪里，你还是会反复寻找同一种被理解，也还是舍不得同一类人。',
       consequence: '路径改变了生活的外形，却没有替你解决这一生真正的问题。',
+      choicePrompt: scenes[2]?.choicePrompt,
+      choices: scenes[2]?.choices || [],
     },
   ]
+}
+
+function rememberTimelineChoice(worldState, item) {
+  try {
+    const timeline = {
+      ...(worldState.persistentTimeline || {}),
+      currentHorizon:
+        worldState.scenes?.find((scene) => scene.evidence?.polarity === item.role)
+          ?.time || item.name,
+      status: 'active',
+      experiencedNodes: [
+        ...(worldState.persistentTimeline?.experiencedNodes || []),
+        {
+          nodeId: item.id,
+          choiceId: item.choiceId,
+          choiceLabel: item.choiceLabel,
+          consequence: item.consequence,
+          experiencedAt: item.collectedAt,
+        },
+      ],
+    }
+    const next = {
+      ...worldState,
+      persistentTimeline: timeline,
+    }
+    localStorage.setItem('echo.worldState', JSON.stringify(next))
+    localStorage.setItem('echo.persistentTimeline.v1', JSON.stringify(timeline))
+  } catch (error) {
+    console.warn('[Echo] 时间线选择未能保存', error)
+  }
 }

@@ -202,13 +202,17 @@ export function rememberWorldEvidence(item: {
   id: string;
   name: string;
   role: string;
+  choiceLabel?: string;
+  consequence?: string;
 }): EchoMemoryState {
   const state = readEchoMemory();
   const evidence = record(
     "archive",
     "simulated",
     "evidence",
-    `${item.name}（${item.role}）`,
+    `${item.name}（${item.role}）` +
+      `${item.choiceLabel ? `；用户选择：${item.choiceLabel}` : ""}` +
+      `${item.consequence ? `；结果：${item.consequence}` : ""}`,
     `world-evidence:${item.id}`,
   );
   const next = {

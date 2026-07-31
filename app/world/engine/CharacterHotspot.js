@@ -188,15 +188,19 @@ function createCharacterFromWorld(baseCharacter) {
   try {
     const state = JSON.parse(localStorage.getItem('echo.worldState') || '{}')
     const name = state?.profile?.name
-    const firstQuestion = state?.answers?.[4]
+    const observationTarget =
+      state?.persistentTimeline?.observationTarget ||
+      state?.answers?.[4]
     return {
       ...baseCharacter,
-      displayName: name ? `五年后的${name}` : '沿另一条路生活的你',
+      displayName: name
+        ? `这条时间线里的${name}`
+        : '沿另一条路生活的你',
       openingNarration:
-        '你找到三件证据后，水里的倒影终于抬起头。她没有比你更正确，只是比你多活过了这条路的五年。',
-      openingLine: firstQuestion
-        ? `你终于来了。我知道你想问：“${firstQuestion}” 你可以亲口问我。`
-        : '你终于来了。这里和你想象的一样吗？',
+        '你亲历的三个节点已经抵达本次观察时刻。水里的倒影拥有这条路的记忆，但不知道你在现实那边后来怎样生活。',
+      openingLine: observationTarget
+        ? `我们已经走到「${observationTarget}」了。我只知道自己这边发生过的事；你现实里的那条路，要由你告诉我。`
+        : '我们已经走到这次的观察节点了。你可以直接问我。',
     }
   } catch {
     return { ...baseCharacter }

@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import {
   rememberGeneratedWorld,
   rememberOnboarding,
@@ -73,6 +73,15 @@ type WorldState = {
     confidence: number;
   };
   scenes: WorldScene[];
+  persistentTimeline?: {
+    forkMoment: string;
+    sharedOrigin: string;
+    realPath: string;
+    counterfactualPath: string;
+    observationTarget: string;
+    currentHorizon: string;
+    status: "active";
+  };
 };
 
 type Prompt = {
@@ -107,10 +116,10 @@ const profilePrompts = [
 const journeyPrompts: Record<JourneyMode, Prompt[]> = {
   rewrite: [
     {
-      kicker: "没有走的路",
-      question: "当时摆在你面前、但你最终没有选的那条路，是什么？",
-      helper: "一句话就够。比如：去伦敦加入一家刚起步的 AI 公司。",
-      suggestions: ["没去的那座城市", "没接的那份工作", "没开始的那件事"],
+      kicker: "共同起点",
+      question: "那个岔路发生在什么时候？当时的你正站在人生哪个阶段？",
+      helper: "例如：两个月前，刚毕业，正在选第一份工作的 Offer。",
+      suggestions: ["刚毕业选第一份工作", "准备搬去另一座城市", "收到一个新的机会"],
     },
     {
       kicker: "现实锚点",
@@ -118,22 +127,22 @@ const journeyPrompts: Record<JourneyMode, Prompt[]> = {
       helper: "只写真实发生过的事。这里不会替你改写现实。",
     },
     {
-      kicker: "选择逻辑",
-      question: "你当时为什么会这样选？",
-      helper: "如果愿意，也可以说说那时怕什么、舍不得什么、期待什么。",
-      suggestions: ["我更想要稳定", "我不想让人失望", "我当时还没准备好"],
+      kicker: "平行选择",
+      question: "这一次回到那个时刻，你要让哪个选择真正发生？",
+      helper: "这是这条世界唯一固定的大岔路，进入后不再重复选择。",
+      suggestions: ["接受另一份 Offer", "去那座没有去的城市", "开始那件没有开始的事"],
     },
     {
-      kicker: "不能丢下的东西",
-      question: "无论走哪条路，你都不愿意失去什么？",
-      helper: "可以是一个人、一种生活，或者你很在意的自己。",
-      suggestions: ["和重要的人的关系", "对生活的选择权", "我仍然喜欢的自己"],
+      kicker: "当时的理由",
+      question: "当时为什么没有选它？什么现实条件不能凭空消失？",
+      helper: "可以说收入、发展、关系、家庭、能力或当时未知的事情。",
+      suggestions: ["我更看重未来发展", "我担心收入和机会", "我不确定自己是否适合"],
     },
     {
-      kicker: "第一句话",
-      question: "见到那个真的走了这条路的自己，你最想先问什么？",
-      helper: "这会成为你们见面时的第一句话。",
-      suggestions: ["你后悔吗？", "你失去了什么？", "你现在快乐吗？"],
+      kicker: "观察节点",
+      question: "这一次，你想先把这条时间线生活到哪里？",
+      helper: "可以是同一个今天、一年后、五年后、十年后，或一个具体人生节点。以后还能继续。",
+      suggestions: ["先走到同一个今天", "看看一年后", "直接观察五年后"],
     },
   ],
   replay: [
@@ -208,7 +217,7 @@ function buildWorldState(
     mode === "replay"
       ? `重新回到：${answers[0] || "一段很想念的生活"}`
       : mode === "rewrite"
-        ? `如果那一次，我选择了：${answers[0] || "另一条路"}`
+        ? `如果在「${answers[0] || "那个岔路"}」，我选择了：${answers[2] || "另一条路"}`
         : `如果现在，我选择：${answers[1] || "其中一条路"}`;
 
   const expectation =
@@ -217,7 +226,7 @@ function buildWorldState(
     mode === "decide"
       ? answers[3]
       : mode === "rewrite"
-        ? `为了这条路，你必须重新安排「${answers[3] || "现实中重要的人与生活"}」`
+        ? `这条路仍要带着这些现实条件继续：${answers[3] || "当时真实存在的顾虑"}`
         : "那段时间终究会继续向前";
 
   const desire =
@@ -225,16 +234,16 @@ function buildWorldState(
       ? answers[2] || "让生活重新拥有选择"
       : mode === "replay"
         ? answers[3] || "重新感到生活正在发生"
-        : answers[0] || "走向那条没有保证的路";
+        : answers[2] || "走向那条没有保证的路";
   const fear =
     mode === "decide"
       ? answers[3] || "失去现在拥有的确定感"
       : mode === "rewrite"
-        ? answers[2] || "辜负重要的人，也害怕自己不够好"
+        ? answers[3] || "失去当时更看重的东西"
         : "知道这段时间终究会结束";
   const alternative =
     mode === "rewrite"
-      ? answers[0] || "做出另一个选择"
+      ? answers[2] || "做出另一个选择"
       : mode === "decide"
         ? answers[1] || "选择其中一条路"
         : answers[0] || "重新回到那段时间";
@@ -263,21 +272,21 @@ function buildWorldState(
         ]
       : [
           {
-            time: "第一幕 · 出发后的第一个晚上",
-            title: `你真的走进了「${alternative}」`,
-            detail: `房间里还有没拆完的箱子。手机同时亮起两条消息：一个来自新生活，一个来自你没能一起带来的人。最初的自由很具体，也第一次完全由你承担。`,
+            time: `第一幕 · ${answers[0] || "岔路发生时"}`,
+            title: `你亲手确认了「${alternative}」`,
+            detail: `这次大选择已经发生。接下来真正改变时间线的，是你如何进入这条生活，以及当时那些现实条件如何继续留下来。`,
             polarity: "gain",
           },
           {
-            time: "第二幕 · 第 312 天",
-            title: "第 312 天，一个普通的晚上",
-            detail: `你已经能熟练地过这里的生活。新的生活也开始索取代价：${cost || fear}。平行世界不是更好的人生，只是一组不同的交换。`,
+            time: "第二幕 · 这条生活开始形成日常",
+            title: "新的选择第一次碰到现实",
+            detail: `你开始获得这条路的反馈，也发现它不会抹掉原来的顾虑：${cost || fear}。`,
             polarity: "cost",
           },
           {
-            time: "第三幕 · 第五年",
-            title: "五年后，同一个问题换了一种问法",
-            detail: `外部条件改变了，但你仍在意当初为什么出发。你想问她：「${answers[4] || "你现在过得好吗？"}」`,
+            time: `第三幕 · ${answers[4] || "本次观察节点"}`,
+            title: `时间线抵达「${answers[4] || "你想观察的时刻"}」`,
+            detail: "共感态在这里暂停。你可以与已经生活到这个节点的自己开放对话，也可以继续选择下一个时间节点。",
             polarity: "turn",
           },
         ];
@@ -332,42 +341,42 @@ function buildWorldState(
           {
             id: "arrival",
             time: events[0].time,
-            place: mode === "rewrite" ? alternative : "选择发生后的新生活",
-            title: "抵达后的第一个晚上",
-            atmosphere: "纸箱还没有拆完，窗外的城市不像想象中那么浪漫。手机同时亮起两条消息。",
-            situation: "一条来自新同事：“明早的方案方便今晚先看一眼吗？” 另一条来自家里：“到了吗？有空回个电话。”",
-            choicePrompt: "今晚，你先回应谁？",
+            place: mode === "rewrite" ? answers[0] || "岔路发生的地方" : "选择发生后的新生活",
+            title: "大选择已经发生",
+            atmosphere: `你仍站在共同起点上，但这一次，${alternative}已经成为现实。`,
+            situation: `现实中的你选择了「${answers[1] || "原来的路"}」；这条世界从「${alternative}」开始。`,
+            choicePrompt: "确认之后，你想先如何进入这条新生活？",
             choices: [
-              { id: "work", label: "先回复新同事，把第一步站稳", reveals: "你迅速获得了新团队的信任；家里的通话被推迟到第二天。" },
-              { id: "home", label: "先给家里打电话", reveals: "你听见熟悉的声音，也第一次承认自己其实很害怕。" },
+              { id: "tell", label: "先告诉一个重要的人", reveals: "这个选择第一次被说出口，也开始进入你们的关系。" },
+              { id: "prepare", label: "先处理眼前最具体的准备", reveals: "你暂时没有解释它，只让这条生活先从一个实际动作开始。" },
             ],
             evidence: events[0],
           },
           {
             id: "exchange",
             time: events[1].time,
-            place: "第 312 天 · 一次重要机会之前",
-            title: "新的生活开始向你索取东西",
-            atmosphere: "你已熟练地穿过这座城市。桌上放着一份会改变未来两年的邀请，手机里还有一条很久没回复的语音。",
-            situation: `你得到了一部分「${desire}」，也越来越清楚它并不会自动解决「${fear}」。`,
-            choicePrompt: "这一次，你要把时间给谁？",
+            place: "选择之后 · 第一个形成日常的阶段",
+            title: "新生活第一次给你真实反馈",
+            atmosphere: "最初的新鲜感开始退到背景，工作、关系与日常安排逐渐露出自己的结构。",
+            situation: `这条路带来了一些「${desire}」，也让「${fear}」以新的形式留在生活里。`,
+            choicePrompt: "当你第一次察觉这种摩擦时，你更想怎么回应？",
             choices: [
-              { id: "accelerate", label: "接下机会，再向前一步", reveals: "你的名字开始被更多人知道；一些普通的晚上从日历里消失了。" },
-              { id: "repair", label: "停下来，修复一段正在变远的关系", reveals: "你错过了最快的上升，却第一次没有让忙碌替自己作答。" },
+              { id: "engage", label: "主动靠近，弄清这套生活怎样运转", reveals: "你获得更多一手反馈，也投入了更多注意力。" },
+              { id: "protect", label: "先保留边界，不急着适应所有要求", reveals: "你保住了一部分自己的节奏，但一些关系与机会仍保持距离。" },
             ],
             evidence: events[1],
           },
           {
             id: "meeting",
             time: events[2].time,
-            place: "第五年 · 她独自待着的房间",
-            title: "你终于见到了沿这条路生活的自己",
-            atmosphere: "她身边有你羡慕的东西，也留下了几件从照片里看不出来的遗憾。",
-            situation: `她已经知道你要问：“${answers[4] || "你后悔吗？"}”`,
-            choicePrompt: "见到她以后，你先看什么？",
+            place: answers[4] || "用户指定的观察节点",
+            title: "你与这条路上的自己重新分开",
+            atmosphere: "刚才由你亲历的生活停在这个节点。倒影拥有同样的世界记忆，但只知道自己走过的这一边。",
+            situation: `她已经生活到「${answers[4] || "这个观察节点"}」，也可能在想象你走过的另一条路。`,
+            choicePrompt: "开始开放对话以前，你想先让她记住哪一部分？",
             choices: [
-              { id: "achievement", label: "看她终于拥有的东西", reveals: "那些成果是真的，但没有替她回答所有问题。" },
-              { id: "ordinary", label: "看她如何度过一个普通晚上", reveals: "真正让你共情的不是高光，而是她也会犹豫、孤独和想家。" },
+              { id: "gain", label: "这条路目前真实得到的部分", reveals: "她会承认得到，但不会用得到证明选择正确。" },
+              { id: "friction", label: "这条路目前仍然摩擦的部分", reveals: "她会带着未解决的问题与你见面，而不是提供结论。" },
             ],
             evidence: events[2],
           },
@@ -394,9 +403,9 @@ function buildWorldState(
     answers,
     events,
     fixedFacts: [
+      `共同起点：${answers[0] || "岔路发生的时刻"}`,
       `现实中的你最终选择：${answers[1] || "当前这条生活"}`,
-      `你当时/现在的真实顾虑：${fear}`,
-      `你不愿失去：${answers[3] || "现实里重要的人与生活"}`,
+      `平行世界固定选择：${alternative}`,
     ],
     changedVariable: alternative,
     centralTension: mode === "replay" ? "怀念与继续生活" : `${desire} 与 ${fear}`,
@@ -411,6 +420,18 @@ function buildWorldState(
       confidence: 0.68,
     },
     scenes,
+    persistentTimeline:
+      mode === "rewrite"
+        ? {
+            forkMoment: answers[0] || "岔路发生时",
+            sharedOrigin: answers[0] || "共同起点",
+            realPath: answers[1] || "现实路径",
+            counterfactualPath: alternative,
+            observationTarget: answers[4] || "同一个今天",
+            currentHorizon: "fork",
+            status: "active",
+          }
+        : undefined,
   };
 }
 
@@ -461,12 +482,6 @@ export default function Home() {
     }
     setStage("returned");
   }, []);
-
-  const routeLabel = useMemo(() => {
-    if (mode === "replay") return answers[0] || "一段想念的时间";
-    if (mode === "rewrite") return answers[0] || "没走的那条路";
-    return answers[1] || "一个尚未发生的未来";
-  }, [answers, mode]);
 
   function goToProfile() {
     setStage("profile");
@@ -547,7 +562,7 @@ export default function Home() {
   async function generateDoor() {
     if (isGenerating) return;
     setIsGenerating(true);
-    setGenerationNote("Echo 正在让这条人生先生活五年……");
+    setGenerationNote("Echo 正在让这条时间线从岔路开始生活……");
 
     let nextWorld = buildWorldState(profile, timeline, mode, answers);
     const controller = new AbortController();
@@ -584,7 +599,9 @@ export default function Home() {
     ["gain", "cost", "truth"].forEach((id) =>
       window.sessionStorage.removeItem(`echo.inventory.${id}`),
     );
+    window.localStorage.removeItem("echo.persistentTimeline.v1");
     window.sessionStorage.removeItem("echo.chat.messages.echo-childhood-self");
+    window.localStorage.removeItem("echo.persistentTimeline.v1");
     setStage("door");
     setIsGenerating(false);
   }
@@ -597,14 +614,14 @@ export default function Home() {
   function loadDemo() {
     const demoProfile = {
       name: "小袁",
-      identity: "正在寻找自己方向的产品经理",
+      identity: "刚毕业、正在适应第一份工作的 AI 产品经理",
     };
     const demoAnswers = [
-      "去伦敦，加入一家刚起步的 AI 公司",
-      "我最后留在了稳定的工作里",
-      "我怕自己能力不够，也舍不得已经建立好的关系",
-      "和重要的人的关系，还有对生活的选择权",
-      "你真的更自由了吗，还是只是换了一种焦虑？",
+      "两个月前，刚毕业，正在选择第一份工作的 Offer",
+      "我选择了小红书的 AI 产品岗位",
+      "接受宁波移动的校招岗位",
+      "我当时更看重 AI 方向、收入和未来发展，也担心移动的工作一眼望到头",
+      "先走到和现实相同的今天",
     ];
     const demoWorld = buildWorldState(demoProfile, "past", "rewrite", demoAnswers);
     setProfile(demoProfile);
@@ -704,7 +721,7 @@ export default function Home() {
                 <b />
               </div>
             </div>
-            <p>另一个你，已经在门后生活了五年。</p>
+            <p>另一条时间线，正在门后等待第一次选择。</p>
           </div>
         </section>
       )}
@@ -899,18 +916,18 @@ export default function Home() {
           <div className="world-draft">
             <article>
               <span>01 · 事实</span>
-              <h3>未选择：{answers[0]}</h3>
+              <h3>共同起点：{answers[0]}</h3>
               <p>现实选择：{answers[1]}</p>
             </article>
             <article>
               <span>02 · 为什么</span>
-              <h3>你当时这样选，是因为</h3>
+              <h3>这次固定发生的平行选择</h3>
               <p>{answers[2]}</p>
             </article>
             <article>
               <span>03 · 门后要验证</span>
-              <h3>{routeLabel}</h3>
-              <p>不应被模拟抹掉：{answers[3]}。你会问：“{answers[4]}”</p>
+              <h3>先生活到：{answers[4]}</h3>
+              <p>不能被模拟抹掉：{answers[3]}。抵达后仍可继续选择下一个时间节点。</p>
             </article>
           </div>
           <div className="confirm-actions">
@@ -950,27 +967,18 @@ export default function Home() {
             <h2>
               这扇门后不是空白。
               <br />
-              <em>另一个你，已经在这里生活了五年。</em>
+              <em>这条时间线，将从那个岔路重新开始。</em>
             </h2>
             <p>{worldState.seed}</p>
             <div className="evidence-preview">
-              {worldState.events.map((event) => (
-                <div key={event.polarity}>
-                  <span>{event.polarity === "gain" ? "+" : event.polarity === "cost" ? "−" : "∞"}</span>
-                  <p>
-                    {event.polarity === "gain"
-                      ? "她得到的"
-                      : event.polarity === "cost"
-                        ? "她失去的"
-                        : "始终没变的"}
-                  </p>
-                </div>
-              ))}
+              <div><span>01</span><p>亲手确认平行选择</p></div>
+              <div><span>02</span><p>经历它第一次碰到现实</p></div>
+              <div><span>03</span><p>抵达观察节点，与她对话</p></div>
             </div>
             <button className="primary-cta" type="button" onClick={openWorld}>
-              推开这扇门 <span>↗</span>
+              回到那个岔路 <span>↗</span>
             </button>
-            <p className="control-note">桌面端体验 · WASD 行走 · E 触碰记忆 · 与另一个自己对话</p>
+            <p className="control-note">桌面端体验 · WASD 行走 · E 进入剧情节点 · 抵达后开放对话</p>
           </div>
           <div className="generated-door" aria-hidden="true">
             <div className="door-frame">

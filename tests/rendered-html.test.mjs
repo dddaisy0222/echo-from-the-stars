@@ -25,7 +25,9 @@ test("ships the complete Echo journey and world handoff", async () => {
   assert.match(page, /找到那条没走的路/);
   assert.doesNotMatch(page, /MBTI/);
   assert.match(page, /语音输入/);
-  assert.match(page, /另一个你，已经在这里生活了五年/);
+  assert.match(page, /这条时间线，将从那个岔路重新开始/);
+  assert.match(page, /先走到同一个今天/);
+  assert.doesNotMatch(page, /另一个你，已经在这里生活了五年/);
   assert.match(page, /localStorage\.setItem\("echo\.worldState"/);
   assert.match(worker, /url\.pathname === "\/api\/chat"/);
   assert.match(worker, /url\.pathname === "\/api\/world"/);
