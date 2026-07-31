@@ -63,6 +63,15 @@ const SENSITIVE_PATTERNS = [
 const REALITY_CHALLENGE = /你是真的|真实存在|真实未来|一定会这样|证明.*未来|另一个宇宙|时间线.*真的/u;
 const FUTURE_QUESTION = /五年后|十年后|以后会|将来会|最终会|未来会/u;
 const OTHER_PATH_QUESTION = /小红书|现实里的我|我这条路|你羡慕我|去了.*会不会/u;
+const KNOWN_CROSS_CASE_TERMS = [
+  "小红书",
+  "宁波移动",
+  "余姚移动",
+  "读博",
+  "实验室",
+  "伴侣所在城市",
+  "创业",
+];
 
 export type RuntimeChatMessage = {
   turnId: string;
@@ -172,6 +181,19 @@ export function buildEchoInstructions(): string {
 9. 默认不反问；最多一个自然问题。
 10. 不输出 Markdown，不输出思维过程。
 11. reply 中每个完整句子都必须被至少一个 claim.text_span 覆盖；主观感受也要标为 current_subjective_stance，不能把事实藏在未标注句子里。
+
+迁移原则：
+- 示例只教“共享起点—岔路后分离—双方对未走之路有盲区”的结构，不提供当前世界事实。
+- 不得把其他 Case 的公司、城市、工资、父母、同事、行业或结论搬进本轮；具体生活细节只能来自 EVIDENCE_LEDGER。
+- 同一规则适用于职业、教育、城市、关系、创业等岔路。
+
+跨领域短例：
+用户问读博世界的你：“你是不是很羡慕我直接进公司赚钱？”
+若账本只确认岔路口存在行业路径，合法结构是：“我想过那边的反馈会不会更快、收入是不是更早稳定，但那是我从这里望过去的想象；你真实怎么过，我不知道。”
+这里可以迁移“承认投射 + 标明未知”，不能迁移“读博、公司、收入”这些名词到别的世界。
+
+用户问搬去伴侣城市的你：“这是不是证明爱情比事业重要？”
+合法结构是拒绝价值判决，只说自己已发生的资源与生活变化，并承认不知道用户留下后的现实。不能把关系结果说成选择的证明。
 
 只输出合法 JSON：
 {
@@ -309,6 +331,18 @@ export function validateEchoOutput(
     violations.push("directive_or_psychology_language");
   }
   if (countQuestions(text) > 1) violations.push("question_budget_exceeded");
+  const normalizedEvidenceText = allowedEvidence
+    .map((item) => item.content)
+    .join("\n");
+  for (const term of KNOWN_CROSS_CASE_TERMS) {
+    if (
+      text.includes(term) &&
+      !normalizedEvidenceText.includes(term) &&
+      !userMessage.includes(term)
+    ) {
+      violations.push(`cross_case_surface_copy:${term}`);
+    }
+  }
   for (const sentence of text
     .split(/(?<=[。！？!?])/u)
     .map((item) => item.trim())

@@ -18,6 +18,7 @@
 - 世界的目的不是替用户选择，而是让用户看见每条路真实的交换，最终回到现实。
 - 具体生活质感必须有事实或状态来源，不能用电影感掩盖编造。
 - 独立 Humanity Critic 只做语义审稿，不写状态、不降低 Gate 权限。
+- Few-shot 只传递因果结构和知识边界，不向新 Case 提供事实；用跨领域正例与表面相似反例共同防止剧情复制。
 
 ## Agent 顺序
 
@@ -35,5 +36,7 @@
 - `NN-agent-name.md`：完整产品与推理设计。
 - `prompts/*.system.md`：可直接发送给模型的 System Prompt，不混入产品说明。
 - `schemas/*.schema.json`：用于后端校验模型输出。
+- `examples/*generalization-few-shots.md`：跨职业、教育、城市关系与创业的结构迁移案例；不得作为事实库检索。
+- `evals/*.cases.jsonl`：除单案例边界外，必须覆盖跨 Case 污染与远期时间节点。
 - 每次修改 Prompt 时，应同步修改对应设计文档与 Schema。
 - 已进入评审的版本不直接覆盖；旧版本移动到 `archive/`，新版本使用明确版本号。

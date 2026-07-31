@@ -175,3 +175,51 @@ test("World Manifest connects SPZ, GLB, interactions and Echo context", () => {
   assert.equal(manifest.echo.unlock.type, "all-evidence");
   assert.notEqual(manifest, BEDROOM_MANIFEST);
 });
+
+test("Echo gate rejects surface details copied from another few-shot", () => {
+  const request = sanitizeEchoChatPayload({
+    message: "你今天过得怎么样？",
+    worldContext: {
+      sceneId: "partner-city",
+      sceneDescription: "我搬到了伴侣所在的城市，正在适应新的工作安排。",
+      nearbyObject: "餐桌上放着两份需要协调的日程。",
+      collectedItems: [],
+      previousChoices: [],
+      sharedOrigin: ["一年前决定是否搬去另一座城市。"],
+      parallelMemories: ["今天重新安排了自己的工作时间。"],
+      otherPath: {
+        knownAtFork: ["用户留在原来的城市。"],
+        userDisclosures: [],
+        knownUnknowns: ["用户留下后的具体生活未知。"],
+      },
+    },
+  });
+  assert.ok(request);
+  const copied = validateEchoOutput(
+    {
+      schema_version: "echo-runtime-output.v1",
+      reply: {
+        text: "我今天还好，只是又想起了宁波移动和小红书。",
+        move: "answer",
+        epistemic_position: "present_stance",
+      },
+      claims: [
+        {
+          claim_id: "claim_1",
+          text_span: "我今天还好，只是又想起了宁波移动和小红书",
+          epistemic_status: "current_subjective_stance",
+          evidence_refs: [],
+        },
+      ],
+      used_evidence_ids: [],
+    },
+    request.evidence,
+    request.message,
+  );
+  assert.equal(copied?.gate.passed, false);
+  assert.ok(
+    copied?.gate.violations.some((item) =>
+      item.startsWith("cross_case_surface_copy:"),
+    ),
+  );
+});
