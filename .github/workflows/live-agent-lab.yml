@@ -1,0 +1,60 @@
+name: Temporary Live Agent Lab
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npm run build:pages
+
+      - name: Start secure proxy
+        env:
+          ECHO_UPSTREAM_ORIGIN: https://echo-from-the-stars.yuanxin20020222.chatgpt.site
+          ECHO_SITES_TOKEN: ${{ secrets.ECHO_SITES_TOKEN }}
+        run: |
+          node agent-lab-proxy.mjs > proxy.log 2>&1 &
+          echo $! > proxy.pid
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:4179/api/health > health.json; then
+              cat health.json
+              exit 0
+            fi
+            sleep 2
+          done
+          cat proxy.log
+          exit 1
+
+      - name: Open temporary public tunnel
+        run: |
+          curl --fail --location --output cloudflared \
+            https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64
+          chmod +x cloudflared
+          ./cloudflared tunnel --url http://127.0.0.1:4179 --no-autoupdate > tunnel.log 2>&1 &
+          echo $! > tunnel.pid
+          for attempt in {1..60}; do
+            URL=$(grep -Eo 'https://[-a-z0-9]+\.trycloudflare\.com' tunnel.log | head -1 || true)
+            if [ -n "$URL" ]; then
+              echo "ECHO_AGENT_LAB_URL=$URL/agent-lab/"
+              echo "## Echo Agent Flow Lab" >> "$GITHUB_STEP_SUMMARY"
+              echo "$URL/agent-lab/" >> "$GITHUB_STEP_SUMMARY"
+              wait "$(cat tunnel.pid)"
+              exit $?
+            fi
+            sleep 2
+          done
+          cat tunnel.log
+          exit 1
