@@ -18,6 +18,9 @@ export default defineConfig({
         world: fileURLToPath(
           new URL("./github-pages/world/index.html", import.meta.url),
         ),
+        agentLab: fileURLToPath(
+          new URL("./github-pages/agent-lab/index.html", import.meta.url),
+        ),
       },
     },
   },
