@@ -14,6 +14,9 @@ import {
   sanitizeEchoChatPayload,
   validateEchoOutput,
 } from "../lib/echo-runtime";
+import generalAgentPrompt from "../agent-system/prompts/general-agent.v2.system.md?raw";
+import oracleAgentPrompt from "../agent-system/prompts/oracle-agent.v1.system.md?raw";
+import echoAgentPrompt from "../agent-system/prompts/echo-agent.v1.system.md?raw";
 
 interface Env {
   ASSETS: Fetcher;
@@ -78,6 +81,10 @@ const worker = {
       return handleEchoChatV1(request, env);
     }
 
+    if (url.pathname === "/api/flow" && request.method === "POST") {
+      return handleAgentFlow(request, env);
+    }
+
     if (url.pathname === "/_vinext/image") {
       const allowedWidths = [...DEFAULT_DEVICE_SIZES, ...DEFAULT_IMAGE_SIZES];
       return handleImageOptimization(
@@ -101,6 +108,145 @@ const worker = {
 };
 
 export default worker;
+
+async function handleAgentFlow(request: Request, env: Env): Promise<Response> {
+  if (!hasModel(env)) return notConfigured();
+  let payload: Record<string, unknown>;
+  try {
+    payload = (await request.json()) as Record<string, unknown>;
+  } catch {
+    return apiError("没有读懂 Agent Flow 请求。", "invalid_request", 400);
+  }
+
+  const action = limitedString(payload.action, 40);
+  try {
+    if (action === "general") {
+      const seed = await flowJson(
+        env,
+        generalAgentPrompt,
+        `你正在为产品原型生成面向用户展示的 World Seed Card。遵守 General Agent 的事实边界，但本原型只要求输出以下 JSON：
+{"title":"一句标题","fields":[{"label":"字段名","value":"严格来自用户输入的值"}],"boundary":"一句说明哪些结论尚未生成"}
+不要追问，不添加输入中不存在的事实。字段必须覆盖共同起点、现实路径、平行路径、当时选择机制、目标问题与未知边界。
+
+CASE_CONTEXT:
+${JSON.stringify(payload.caseContext)}`,
+      );
+      return Response.json({ seed });
+    }
+
+    if (action === "calibrate") {
+      const step =
+        typeof payload.step === "number" ? Math.max(0, Math.min(2, payload.step)) : 0;
+      const question = await flowJson(
+        env,
+        oracleAgentPrompt,
+        `你正处于 Oracle calibrate 模式。为可点击原型生成一个校准问题，不生成世界节点。
+本轮 step=${step}。step 0 只校准工作落点/组织安排；step 1 只校准住房/家庭距离；step 2 只校准观察时间节点。
+输出严格 JSON：
+{"topic":"稳定英文topic","eyebrow":"CALIBRATION 0N / 中文主题","question":"一个问题","note":"说明这是现实事实、反事实前提或可保持未知","options":[{"label":"短标签","value":"明确设定值","description":"设定会改变什么"},{"label":"短标签","value":"明确设定值","description":"设定会改变什么"},{"label":"保持未知","value":"unknown","description":"不让模型补写该变量"}]}
+禁止询问幸福、后悔或人格。候选是模型假设，不冒充事实。
+
+CASE_CONTEXT=${JSON.stringify(payload.caseContext)}
+SEED=${JSON.stringify(payload.seed)}
+ALREADY_CALIBRATED=${JSON.stringify(payload.answers)}`,
+      );
+      return Response.json({ question });
+    }
+
+    if (action === "oracle_initialize" || action === "oracle_advance") {
+      const existingNodes = Array.isArray(payload.nodes) ? payload.nodes : [];
+      const index = action === "oracle_initialize" ? 0 : existingNodes.length;
+      const horizonGuide = [
+        "从共同 Offer 岔路开始，宏观选择已经固定为宁波移动，不再让用户重选公司",
+        "推进到入职后第一个由校准前提支持的结构节点",
+        "推进到工作之外的日常结构或家庭/独居边界",
+        "推进到收入、能力使用、反馈周期或发展路径第一次成为具体摩擦",
+      ][Math.min(index, 3)];
+      const node = await flowJson(
+        env,
+        oracleAgentPrompt,
+        `你处于 Oracle ${action === "oracle_initialize" ? "initialize" : "advance"} 模式。本原型使用简化状态合同，但仍遵守一次只推进一个节点、因果连续、不得复制 few-shot 表面剧情。
+本节点目标：${horizonGuide}。
+输出严格 JSON：
+{
+ "id":"node-${index + 1}-稳定短名",
+ "time":"相对时间，不使用伪精确日期",
+ "place":"有输入依据的地点；未知则诚实写泛化地点",
+ "title":"不超过40字",
+ "paragraphs":["2-3段具体、克制、有生活感的场景；不写用户尚未选择后的结果"],
+ "question":"一个微观取舍问题",
+ "choices":[
+  {"id":"a","label":"短标签","action":"用户自己的具体行动","doesNotGuarantee":"这个行动不能保证的外部结果"},
+  {"id":"b","label":"短标签","action":"不同策略的具体行动","doesNotGuarantee":"不能保证的外部结果"}
+ ],
+ "unresolved":"本节点后仍未解决的一项张力或未知"
+}
+Choice 只能控制用户自己的行动、边界、注意力或资源分配。不能选择组织安排、他人反应或必然成功。
+
+CASE_CONTEXT=${JSON.stringify(payload.caseContext)}
+CONFIRMED_SEED=${JSON.stringify(payload.seed)}
+CALIBRATION=${JSON.stringify(payload.calibration)}
+EXISTING_NODES=${JSON.stringify(existingNodes)}
+LIVED_MEMORIES=${JSON.stringify(payload.memories || [])}
+SIGNED_TRIGGER=${JSON.stringify(payload.trigger || null)}`,
+      );
+      return Response.json({ node });
+    }
+
+    if (action === "render_consequence") {
+      const rendered = await flowJson(
+        env,
+        oracleAgentPrompt,
+        `用户刚提交了一个微观选择。只渲染选择后的即时、有限反馈，不生成下一节点，不保证外部结果。
+输出 JSON：{"consequence":"2-3句具体而克制的后果；说明状态发生了什么变化，并保留未解决问题"}
+CASE=${JSON.stringify(payload.caseContext)}
+CALIBRATION=${JSON.stringify(payload.calibration)}
+CURRENT_NODE=${JSON.stringify(payload.node)}
+COMMITTED_CHOICE=${JSON.stringify(payload.choice)}
+LIVED_NODES=${JSON.stringify(payload.nodes)}`,
+      );
+      return Response.json(rendered);
+    }
+
+    if (action === "echo") {
+      const rendered = await flowJson(
+        env,
+        echoAgentPrompt,
+        `你现在为可点击原型生成 Echo 的唯一展示文本。必须遵守平行自我的证据与双向盲区。
+输出严格 JSON：{"reply":"自然口语，1-4句，不使用 Markdown"}
+只把 LIVED_MEMORIES 当作你确实经历过的事。CASE_CONTEXT 中 realPath 只说明岔路选择，不代表你知道用户后来在现实路径的具体经历。用户问未来时明确尚未活到；用户问幸福时不排名；可以不同意。
+
+CASE_CONTEXT=${JSON.stringify(payload.caseContext)}
+CALIBRATION=${JSON.stringify(payload.calibration)}
+LIVED_MEMORIES=${JSON.stringify(payload.memories)}
+CONVERSATION=${JSON.stringify(payload.conversation)}
+OPENING=${Boolean(payload.opening)}
+USER_MESSAGE=${JSON.stringify(payload.message)}`,
+      );
+      return Response.json({ reply: limitedString(rendered.reply, 700) });
+    }
+
+    return apiError("未知 Agent action。", "unknown_flow_action", 400);
+  } catch (error) {
+    console.error("[Echo Agent Flow]", error);
+    return apiError(
+      "Agent 暂时没有成功返回，请重试。",
+      "flow_model_failed",
+      502,
+    );
+  }
+}
+
+async function flowJson(
+  env: Env,
+  instructions: string,
+  input: string,
+): Promise<Record<string, unknown>> {
+  const generated = await callModel(env, instructions, input);
+  const parsed = parseJsonObject(generated.text);
+  if (!parsed) throw new Error("Agent JSON invalid");
+  return parsed;
+}
 
 async function handleWorldGeneration(
   request: Request,
