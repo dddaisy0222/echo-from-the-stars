@@ -1,38 +1,44 @@
 import * as THREE from 'three'
 import { SparkRenderer, SplatMesh } from '@sparkjsdev/spark'
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
+import { Capsule } from 'three/addons/math/Capsule.js'
+import { Octree } from 'three/addons/math/Octree.js'
 import { CharacterHotspot } from './CharacterHotspot.js'
+import { runWorldEntryEffect } from './entry-effects.js'
 import { MemoryHotspot } from './MemoryHotspot.js'
 import {
   readEchoMemory,
   rememberWorldEvidence,
 } from '../../lib/echo-memory.ts'
 import {
-  ASSET_URLS,
-  CHARACTER_CONFIG,
   DEBUG_CONFIG,
-  MEMORY_HOTSPOT_CONFIGS,
   PHYSICS_CONFIG,
   PLAYER_CONFIG,
   SPARK_RENDER_CONFIG,
-  SPAWN_POINT,
   WATER_CONFIG,
-  WATER_LEVEL,
-  WORLD_TRANSFORM,
 } from './config.js'
+import {
+  resolveWorldAssetUrl,
+  resolveWorldManifest,
+} from './world-manifest.js'
 
 const UP = new THREE.Vector3(0, 1, 0)
 const FORWARD = new THREE.Vector3(0, 0, -1)
 const RIGHT = new THREE.Vector3(1, 0, 0)
 
-export function mountMarbleWorld(container) {
-  const experience = new MarbleWorld(container)
+export function mountMarbleWorld(container, options = {}) {
+  const experience = new MarbleWorld(container, options)
   experience.start()
   return experience
 }
 
 class MarbleWorld {
-  constructor(container) {
+  constructor(container, options = {}) {
     this.container = container
+    this.manifest = options.manifest || resolveWorldManifest(options.worldId)
+    this.entryEffect = options.entryEffect || runWorldEntryEffect
+    this.worldOctree = new Octree()
+    this.playerCollider = null
     this.keys = new Set()
     this.isPointerLocked = false
     this.usesFallbackControls = false
@@ -67,12 +73,19 @@ class MarbleWorld {
   async start() {
     try {
       await this.initializeWorld()
+      this.animate()
+      await this.entryEffect(this.manifest.entry.effect, {
+        manifest: this.manifest,
+        scene: this.scene,
+        camera: this.camera,
+        renderer: this.renderer,
+        worldRoot: this.worldRoot,
+      })
       this.isReady = true
-      this.loadingStatus.textContent = '房间已经想起你了'
-      this.loadingDetail.textContent = '点击画面进入 · Esc 退出鼠标控制'
+      this.loadingStatus.textContent = this.manifest.entry.readyTitle
+      this.loadingDetail.textContent = this.manifest.entry.readyDetail
       this.loadingOverlay.classList.add('is-ready', 'is-paused')
       this.enterButton.hidden = false
-      this.animate()
     } catch (error) {
       this.showFatalError(error)
       throw error
@@ -85,9 +98,9 @@ class MarbleWorld {
         <div class="world-canvas" data-world-canvas></div>
         <div class="loading-overlay" data-loading-overlay>
           <div class="loading-card">
-            <p class="loading-kicker">ECHO / 2008</p>
-            <h1 data-loading-status>正在进入那年的房间……</h1>
-            <p data-loading-detail>正在唤醒记忆中的光线</p>
+            <p class="loading-kicker">${escapeHtml(this.manifest.entry.loadingKicker)}</p>
+            <h1 data-loading-status>${escapeHtml(this.manifest.entry.loadingTitle)}</h1>
+            <p data-loading-detail>${escapeHtml(this.manifest.entry.loadingDetail)}</p>
             <div class="loading-track"><span data-loading-progress></span></div>
             <button type="button" data-enter-world hidden>点击进入</button>
           </div>
@@ -157,7 +170,9 @@ class MarbleWorld {
 
   setupThree() {
     this.scene = new THREE.Scene()
-    this.scene.background = new THREE.Color(0x07090a)
+    this.scene.background = new THREE.Color(
+      this.manifest.environment.background,
+    )
 
     this.camera = new THREE.PerspectiveCamera(
       66,
@@ -179,9 +194,9 @@ class MarbleWorld {
 
     this.worldRoot = new THREE.Group()
     this.worldRoot.name = 'worldRoot'
-    this.worldRoot.position.fromArray(WORLD_TRANSFORM.position)
-    this.worldRoot.rotation.fromArray(WORLD_TRANSFORM.rotation)
-    this.worldRoot.scale.fromArray(WORLD_TRANSFORM.scale)
+    this.worldRoot.position.fromArray(this.manifest.transform.position)
+    this.worldRoot.rotation.fromArray(this.manifest.transform.rotation)
+    this.worldRoot.scale.fromArray(this.manifest.transform.scale)
     this.scene.add(this.worldRoot)
 
     this.playerRoot = new THREE.Object3D()
@@ -212,7 +227,7 @@ class MarbleWorld {
 
   setupInteractions() {
     const memories = createMemoryObjects(this.worldState)
-    this.memoryHotspots = MEMORY_HOTSPOT_CONFIGS.map((config, index) => {
+    this.memoryHotspots = this.manifest.evidenceHotspots.map((config, index) => {
       const hotspot = new MemoryHotspot({
         scene: this.scene,
         mount: this.worldShell,
@@ -230,7 +245,7 @@ class MarbleWorld {
     this.characterHotspot = new CharacterHotspot({
       scene: this.scene,
       mount: this.worldShell,
-      config: CHARACTER_CONFIG,
+      config: this.manifest.echo,
       canOpen: () =>
         this.isReady &&
         !this.isInteractionPaused &&
@@ -363,22 +378,33 @@ class MarbleWorld {
     this.resetPlayer()
     this.updateDebugPanel()
     console.info('[Echo] 世界资源加载完成', {
-      worldTransform: WORLD_TRANSFORM,
-      spawnPoint: SPAWN_POINT,
-      waterLevel: WATER_LEVEL,
+      worldId: this.manifest.id,
+      worldTransform: this.manifest.transform,
+      spawnPoint: this.manifest.spawn,
+      waterLevel: this.manifest.environment.waterLevel,
       colliders: this.colliderCount,
     })
   }
 
   createPlayerPhysics() {
-    this.playerPosition = new THREE.Vector3(...SPAWN_POINT.position)
+    this.playerPosition = new THREE.Vector3(...this.manifest.spawn.position)
     this.playerPosition.y = PLAYER_CONFIG.totalHeight / 2
+    const radius = PLAYER_CONFIG.radius
+    const segmentHeight = Math.max(
+      0.01,
+      PLAYER_CONFIG.totalHeight - radius * 2,
+    )
+    this.playerCollider = new Capsule(
+      new THREE.Vector3(0, radius, 0),
+      new THREE.Vector3(0, radius + segmentHeight, 0),
+      radius,
+    )
     this.isGrounded = true
   }
 
   async loadSplat() {
     this.splat = new SplatMesh({
-      url: ASSET_URLS.splat,
+      url: resolveWorldAssetUrl(this.manifest.assets.splat),
       lod: true,
       enableLod: true,
       lodScale: SPARK_RENDER_CONFIG.meshLodScale,
@@ -391,7 +417,7 @@ class MarbleWorld {
         )
       },
     })
-    this.splat.name = 'bedroom.spz'
+    this.splat.name = this.manifest.assets.splat
     this.worldRoot.add(this.splat)
     await this.splat.initialized
     const bounds = this.splat.getBoundingBox()
@@ -399,18 +425,39 @@ class MarbleWorld {
     console.info('[Echo] SPZ 加载成功', {
       bounds: serializeBox(bounds),
       enableLod: this.splat.enableLod,
-      worldTransform: WORLD_TRANSFORM,
+      worldTransform: this.manifest.transform,
     })
   }
 
   async loadColliderWorld() {
-    const boundaries = [
-      { name: 'floor', half: [5.8, 0.08, 7.4], position: [0, -0.08, 0.8] },
-      { name: 'north-wall', half: [5.8, 2.5, 0.08], position: [0, 2.5, -6.15] },
-      { name: 'south-wall', half: [5.8, 2.5, 0.08], position: [0, 2.5, 8.15] },
-      { name: 'west-wall', half: [0.08, 2.5, 7.2], position: [-5.7, 2.5, 1] },
-      { name: 'east-wall', half: [0.08, 2.5, 7.2], position: [5.7, 2.5, 1] },
-    ]
+    if (this.manifest.collision.mode === 'glb') {
+      try {
+        const gltf = await new GLTFLoader().loadAsync(
+          resolveWorldAssetUrl(this.manifest.collision.asset),
+        )
+        gltf.scene.position.fromArray(this.manifest.transform.position)
+        gltf.scene.rotation.fromArray(this.manifest.transform.rotation)
+        gltf.scene.scale.fromArray(this.manifest.transform.scale)
+        gltf.scene.updateMatrixWorld(true)
+        gltf.scene.traverse((object) => {
+          if (!object.isMesh) return
+          object.visible = false
+          this.colliderCount += 1
+        })
+        this.scene.add(gltf.scene)
+        this.colliderRoot = gltf.scene
+        this.worldOctree.fromGraphNode(gltf.scene)
+        this.debugFields.collider.textContent =
+          `GLB 边界 · ${this.colliderCount} 个网格`
+        this.debugFields.count.textContent = String(this.colliderCount)
+        this.setLoadPhase('GLB 房间边界已经稳定', 0.42)
+        return
+      } catch (error) {
+        console.warn('[Echo] GLB 碰撞加载失败，使用 manifest 轻量边界', error)
+      }
+    }
+
+    const boundaries = this.manifest.collision.boxes
 
     boundaries.forEach((boundary) => {
       this.colliderCount += 1
@@ -479,8 +526,12 @@ class MarbleWorld {
     const capsuleBottom =
       bodyPosition.y - PLAYER_CONFIG.totalHeight / 2
     this.isInWater =
-      capsuleBottom <= WATER_LEVEL + WATER_CONFIG.activeDepth &&
-      capsuleBottom >= WATER_LEVEL - WATER_CONFIG.activeDepth * 2
+      capsuleBottom <=
+        this.manifest.environment.waterLevel +
+          this.manifest.environment.waterActiveDepth &&
+      capsuleBottom >=
+        this.manifest.environment.waterLevel -
+          this.manifest.environment.waterActiveDepth * 2
 
     const speedMultiplier = this.isInWater
       ? PLAYER_CONFIG.waterSpeedMultiplier
@@ -508,18 +559,45 @@ class MarbleWorld {
     )
 
     const current = this.playerPosition
+    const bounds = this.manifest.movementBounds
     current.x = THREE.MathUtils.clamp(
       current.x + this.horizontalVelocity.x * deltaTime,
-      -5.35,
-      5.35,
+      bounds.minX,
+      bounds.maxX,
     )
     current.z = THREE.MathUtils.clamp(
       current.z + this.horizontalVelocity.y * deltaTime,
-      -5.8,
-      7.8,
+      bounds.minZ,
+      bounds.maxZ,
     )
-    current.y = PLAYER_CONFIG.totalHeight / 2
+    current.y =
+      bounds.floorY + PLAYER_CONFIG.totalHeight / 2
     this.isGrounded = true
+
+    if (this.colliderRoot && this.playerCollider) {
+      const capsule = this.playerCollider
+      const currentCenter = capsule.start
+        .clone()
+        .add(capsule.end)
+        .multiplyScalar(0.5)
+      const desiredCenter = new THREE.Vector3(
+        current.x,
+        current.y,
+        current.z,
+      )
+      capsule.translate(desiredCenter.sub(currentCenter))
+      for (let iteration = 0; iteration < 4; iteration += 1) {
+        const collision = this.worldOctree.capsuleIntersect(capsule)
+        if (!collision) break
+        capsule.translate(collision.normal.multiplyScalar(collision.depth))
+      }
+      const resolvedCenter = capsule.start
+        .clone()
+        .add(capsule.end)
+        .multiplyScalar(0.5)
+      current.copy(resolvedCenter)
+    }
+
     this.playerRoot.position.set(current.x, current.y, current.z)
     this.updateHeadBob(deltaTime)
     this.updateFootsteps(deltaTime)
@@ -628,11 +706,21 @@ class MarbleWorld {
 
   resetPlayer() {
     if (!this.playerPosition) return
-    const [x, y, z] = SPAWN_POINT.position
-    const floorY = PLAYER_CONFIG.totalHeight / 2
+    const [x, , z] = this.manifest.spawn.position
+    const floorY =
+      this.manifest.movementBounds.floorY + PLAYER_CONFIG.totalHeight / 2
     this.playerPosition.set(x, floorY, z)
+    if (this.playerCollider) {
+      const center = this.playerCollider.start
+        .clone()
+        .add(this.playerCollider.end)
+        .multiplyScalar(0.5)
+      this.playerCollider.translate(
+        new THREE.Vector3(x, floorY, z).sub(center),
+      )
+    }
     this.playerRoot.position.set(x, floorY, z)
-    this.playerRoot.rotation.set(0, SPAWN_POINT.yaw, 0)
+    this.playerRoot.rotation.set(0, this.manifest.spawn.yaw, 0)
     this.pitchRoot.rotation.set(0, 0, 0)
     this.verticalVelocity = 0
     this.horizontalVelocity.set(0, 0)
@@ -718,12 +806,11 @@ class MarbleWorld {
       ? this.worldState.answers
       : []
     return {
-      sceneId: 'flooded-bedroom',
+      sceneId: this.manifest.id,
       sceneDescription:
-        `一间被清澈浅水淹没的旧卧室。当前可能世界是：${this.worldState.seed || '另一条没有走过的人生'}。` +
+        `${this.manifest.title}。当前可能世界是：${this.worldState.seed || '另一条没有走过的人生'}。` +
         `这里已经出现的核心矛盾是：${this.worldState.centralTension || this.worldState.cost || '这条路同时带来得到与代价'}。`,
-      nearbyObject:
-        '水面里出现了另一个自己的倒影。她只记得这条可能世界里已经发生的事，不自动知道现实中的用户后来怎样生活。',
+      nearbyObject: this.manifest.echo.nearbyObject,
       playerPosition: {
         x: playerPosition.x,
         y: playerPosition.y,
@@ -776,8 +863,8 @@ class MarbleWorld {
 
   logSpawnFloorProbe() {
     console.info('[Echo] 轻量房间边界就绪', {
-      floorY: 0,
-      spawnPoint: SPAWN_POINT.position,
+      floorY: this.manifest.movementBounds.floorY,
+      spawnPoint: this.manifest.spawn.position,
     })
   }
 
@@ -845,6 +932,12 @@ function readPreviousChoices() {
   } catch {
     return []
   }
+}
+
+function escapeHtml(value) {
+  const element = document.createElement('div')
+  element.textContent = String(value ?? '')
+  return element.innerHTML
 }
 
 function analyzeAndFilterTriangles(vertices, sourceIndices) {

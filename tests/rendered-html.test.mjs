@@ -6,6 +6,11 @@ import {
   sanitizeEchoChatPayload,
   validateEchoOutput,
 } from "../lib/echo-runtime.ts";
+import {
+  BEDROOM_MANIFEST,
+  resolveWorldManifest,
+  validateWorldManifest,
+} from "../app/world/engine/world-manifest.js";
 
 const root = new URL("../", import.meta.url);
 
@@ -154,4 +159,19 @@ test("Echo fallback preserves uncertainty instead of coaching the user", () => {
     reply.reply.text,
     /你真正想要|你应该|发出那封信|最小动作/,
   );
+});
+
+test("World Manifest connects SPZ, GLB, interactions and Echo context", () => {
+  const manifest = resolveWorldManifest("flooded-bedroom");
+  assert.equal(validateWorldManifest(manifest), manifest);
+  assert.equal(manifest.schemaVersion, "echo-world-manifest.v1");
+  assert.match(manifest.assets.splat, /\.spz$/);
+  assert.match(manifest.collision.asset, /\.glb$/);
+  assert.equal(manifest.collision.mode, "glb");
+  assert.deepEqual(
+    manifest.evidenceHotspots.map((item) => item.id),
+    ["gain", "cost", "truth"],
+  );
+  assert.equal(manifest.echo.unlock.type, "all-evidence");
+  assert.notEqual(manifest, BEDROOM_MANIFEST);
 });
