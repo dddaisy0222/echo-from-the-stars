@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   live:
@@ -49,6 +49,12 @@ jobs:
             URL=$(grep -Eo 'https://[-a-z0-9]+\.trycloudflare\.com' tunnel.log | head -1 || true)
             if [ -n "$URL" ]; then
               echo "ECHO_AGENT_LAB_URL=$URL/agent-lab/"
+              git config user.name "echo-agent-lab"
+              git config user.email "echo-agent-lab@users.noreply.github.com"
+              printf '%s\n' "$URL/agent-lab/" > .echo-live-url
+              git add .echo-live-url
+              git commit -m "chore: report temporary Agent Lab URL"
+              git push origin HEAD:live-agent-url --force
               echo "## Echo Agent Flow Lab" >> "$GITHUB_STEP_SUMMARY"
               echo "$URL/agent-lab/" >> "$GITHUB_STEP_SUMMARY"
               wait "$(cat tunnel.pid)"
