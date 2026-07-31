@@ -1,0 +1,163 @@
+{
+  "journey_id": "journey_01",
+  "seed_version": 4,
+  "base_profile_ref": {
+    "profile_id": "profile_01",
+    "profile_version": 3
+  },
+  "intent": {
+    "status": "confirmed",
+    "candidate_id": "intent_01",
+    "verbatim": "我不后悔，只是好奇没选那份工作会怎样",
+    "normalized": "past_unchosen",
+    "evidence": [
+      {
+        "turn_id": "turn_02",
+        "quote": "我不后悔，只是好奇没选那份工作会怎样",
+        "evidence_level": "explicit"
+      }
+    ],
+    "confirmed_at_turn_id": "turn_03"
+  },
+  "fork_moment": {
+    "status": "candidate",
+    "candidate_id": "fork_01",
+    "verbatim": "毕业时",
+    "normalized": "毕业求职阶段",
+    "evidence": [
+      {
+        "turn_id": "turn_03",
+        "quote": "毕业时",
+        "evidence_level": "explicit"
+      }
+    ],
+    "confirmed_at_turn_id": null
+  },
+  "unchosen_path": {
+    "status": "confirmed",
+    "candidate_id": "path_01",
+    "verbatim": "去伦敦加入一家 AI 公司",
+    "normalized": "去伦敦加入一家 AI 公司",
+    "evidence": [
+      {
+        "turn_id": "turn_03",
+        "quote": "去伦敦加入一家 AI 公司",
+        "evidence_level": "explicit"
+      }
+    ],
+    "confirmed_at_turn_id": "turn_10"
+  },
+  "real_path": {
+    "status": "confirmed",
+    "candidate_id": "path_02",
+    "verbatim": "留在杭州进了大厂",
+    "normalized": "留在杭州进入大厂",
+    "evidence": [
+      {
+        "turn_id": "turn_03",
+        "quote": "留在杭州进了大厂",
+        "evidence_level": "explicit"
+      }
+    ],
+    "confirmed_at_turn_id": "turn_10"
+  },
+  "decision_mechanism": {
+    "stated_reasons": [],
+    "practical_constraints": [
+      {
+        "status": "confirmed",
+        "candidate_id": "constraint_01",
+        "verbatim": "我担心自己的英文工作能力不够",
+        "normalized": "担心英文工作能力不足",
+        "evidence": [
+          {
+            "turn_id": "turn_05",
+            "quote": "我担心自己的英文工作能力不够",
+            "evidence_level": "explicit"
+          }
+        ],
+        "confirmed_at_turn_id": "turn_10"
+      }
+    ],
+    "preferences_at_the_time": [],
+    "fears": [],
+    "hopes": [],
+    "attachments": [
+      {
+        "status": "confirmed",
+        "candidate_id": "attachment_01",
+        "verbatim": "也舍不得当时很重要的那个人",
+        "normalized": "不愿离开当时重要的人",
+        "evidence": [
+          {
+            "turn_id": "turn_05",
+            "quote": "也舍不得当时很重要的那个人",
+            "evidence_level": "explicit"
+          }
+        ],
+        "confirmed_at_turn_id": "turn_10"
+      }
+    ],
+    "unknowns": []
+  },
+  "invariants": {
+    "reality_constraints": [],
+    "valued_continuities": [
+      {
+        "status": "confirmed",
+        "candidate_id": "continuity_01",
+        "verbatim": "我不希望那段关系直接被写没",
+        "normalized": "那段关系在平行世界中仍然存在，但结果不预设",
+        "evidence": [
+          {
+            "turn_id": "turn_07",
+            "quote": "我不希望那段关系直接被写没",
+            "evidence_level": "explicit"
+          }
+        ],
+        "confirmed_at_turn_id": "turn_10"
+      }
+    ]
+  },
+  "target_question": {
+    "status": "confirmed",
+    "candidate_id": "question_01",
+    "verbatim": "我得到的是自由，还是换了一种焦虑？",
+    "simulation_focus": [
+      "日常选择权",
+      "工作压力",
+      "关系与迁移的交换"
+    ],
+    "evidence": [
+      {
+        "turn_id": "turn_09",
+        "quote": "我得到的是自由，还是换了一种焦虑？",
+        "evidence_level": "explicit"
+      }
+    ],
+    "confirmed_at_turn_id": "turn_10"
+  },
+  "confirmation": {
+    "status": "confirmed",
+    "presented_seed_version": 4,
+    "confirmed_version": 4,
+    "confirmed_at_turn_id": "turn_10"
+  },
+  "rejected_tombstones": [
+    {
+      "candidate_id": "fear_old_01",
+      "field_path": "decision_mechanism.fears",
+      "normalized": "害怕冒险",
+      "rejected_at_turn_id": "turn_06"
+    }
+  ],
+  "revision_history": [
+    {
+      "seed_version": 4,
+      "field_path": "confirmation",
+      "operation": "confirm",
+      "turn_id": "turn_10",
+      "created_at": "2026-07-31T08:00:00.000Z"
+    }
+  ]
+}

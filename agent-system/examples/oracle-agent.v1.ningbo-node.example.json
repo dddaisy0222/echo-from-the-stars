@@ -1,0 +1,175 @@
+{
+  "schema_version": "oracle-transition.v1",
+  "request_id": "oracle_ningbo_req_001",
+  "transition_id": "oracle_ningbo_transition_001",
+  "world_id": "world_ningbo_mobile_001",
+  "journey_id": "journey_ningbo_01",
+  "seed_version": 3,
+  "pack_id": "pack_ningbo_mobile_001",
+  "based_on_state_version": 0,
+  "mode": "initialize",
+  "requested_node_id": "ningbo_node_001",
+  "node": {
+    "node_id": "ningbo_node_001",
+    "horizon": "month_1",
+    "title": "离家近，岗位与边界都还没定型",
+    "situation": "回到宁波后的第一个月，住处和家庭距离先确定下来，岗位却还没有。基层轮岗让一天被流程学习、材料流转和跟着同事理解一线业务切开；晚上能不能真正留下来、与父母距离变近会怎样改变默认安排，都还没有答案。",
+    "ordinary_details": [
+      "早上不用跨城通勤，但出门时间仍取决于当天要去的业务点。",
+      "一天里既有系统流转和材料整理，也有跟着同事理解一线业务的时间。",
+      "一些任务的完成标准是流程是否走完，做得更好会怎样被看见，暂时还没有清晰反馈。",
+      "晚上回到自己的住处后，工作是否继续占用注意力、家里是否默认她随时有空，都还没有形成固定答案。"
+    ],
+    "render_cues": [
+      {
+        "cue_id": "ningbo_cue_yinzhou_home",
+        "kind": "spatial",
+        "detail": "鄞州的独立小居所提供了与父母距离近、但仍保留私人空间的生活结构。",
+        "causal_refs": ["premise_housing_yinzhou"],
+        "persistence": "callback_candidate"
+      },
+      {
+        "cue_id": "ningbo_cue_workflow",
+        "kind": "interface",
+        "detail": "屏幕上是尚未熟悉的业务流转界面，旁边放着自己记下的流程词汇。",
+        "causal_refs": ["premise_role_rotation", "node_mobile_month_1"],
+        "persistence": "callback_candidate"
+      }
+    ],
+    "continuity_refs": [
+      "premise_housing_yinzhou",
+      "premise_role_rotation",
+      "node_mobile_month_1"
+    ],
+    "active_tension_ids": [
+      "ningbo_tension_role",
+      "ningbo_tension_family_boundary",
+      "ningbo_tension_feedback"
+    ],
+    "state_change_op_ids": [
+      "ningbo_op_housing",
+      "ningbo_op_role",
+      "ningbo_op_role_tension",
+      "ningbo_op_family_tension",
+      "ningbo_op_feedback_tension"
+    ],
+    "choices": [
+      {
+        "choice_id": "ningbo_choice_learn_workflow",
+        "strategy": "invest_depth",
+        "label": "先把业务流程学透",
+        "action": "选一条最常遇到的业务流程，从发起到落地完整跟一遍并整理成自己的操作笔记。",
+        "commits_to": "先建立对实际业务如何运转的扎实理解。",
+        "preserves": "保留之后判断岗位方向的依据。",
+        "exposes_to": "短期内投入会集中在具体流程，其他方向的探索会慢一些。",
+        "does_not_guarantee": "不保证熟悉流程就会立刻获得更理想的岗位。",
+        "reversibility": "easy",
+        "feedback_horizon": "next_node"
+      },
+      {
+        "choice_id": "ningbo_choice_ask_role_map",
+        "strategy": "seek_clarity",
+        "label": "先问清岗位地图",
+        "action": "找一次合适的沟通，了解轮岗后的可能去向、各岗位实际负责什么以及需要哪些经验。",
+        "commits_to": "更早获得岗位选择所需的信息。",
+        "preserves": "保留在不同方向之间比较的空间。",
+        "exposes_to": "需要主动表达自己还没想清楚，也可能暂时得不到确定答案。",
+        "does_not_guarantee": "不保证了解路径后就能进入偏好的部门。",
+        "reversibility": "easy",
+        "feedback_horizon": "immediate"
+      },
+      {
+        "choice_id": "ningbo_choice_protect_evening",
+        "strategy": "protect_boundary",
+        "label": "先保留完整晚上",
+        "action": "在没有紧急任务时，把下班后的时间先留给运动、家人或自己的项目，不主动把材料带回家。",
+        "commits_to": "先测试这份工作能否形成清晰的生活边界。",
+        "preserves": "保留工作之外完整使用晚间时间的可能。",
+        "exposes_to": "对岗位方向的主动探索可能会因此少一些。",
+        "does_not_guarantee": "不保证之后所有阶段都能保持同样的边界。",
+        "reversibility": "moderate",
+        "feedback_horizon": "next_node"
+      }
+    ],
+    "uncertainties": [
+      "轮岗后的具体部门仍未确定。",
+      "上下班节奏尚未获得足够可靠的岗位信息。",
+      "与父母距离变近会怎样改变日常相处，需要在体验中共同形成。"
+    ]
+  },
+  "operations": [
+    {
+      "op_id": "ningbo_op_housing",
+      "target_type": "variable",
+      "operation": "create",
+      "target_id": "ningbo_var_housing",
+      "target_label": "住房与家庭距离",
+      "before_state": null,
+      "after_state": "住在鄞州的独立小居所，与父母距离近，同时保留独立生活空间。",
+      "dimensions": ["economic", "relational", "geography", "agency"],
+      "causal_refs": ["premise_housing_yinzhou"]
+    },
+    {
+      "op_id": "ningbo_op_role",
+      "target_type": "variable",
+      "operation": "create",
+      "target_id": "ningbo_var_role",
+      "target_label": "入职岗位阶段",
+      "before_state": null,
+      "after_state": "处于基层业务轮岗阶段，正式岗位方向尚未确定。",
+      "dimensions": ["skill", "time", "institutional"],
+      "causal_refs": ["premise_role_rotation", "node_mobile_month_1"]
+    },
+    {
+      "op_id": "ningbo_op_role_tension",
+      "target_type": "tension",
+      "operation": "create",
+      "target_id": "ningbo_tension_role",
+      "target_label": "熟悉业务与选择方向",
+      "before_state": null,
+      "after_state": "需要在做好当前轮岗任务的同时，逐渐判断自己愿意进入哪类岗位。",
+      "dimensions": ["skill", "institutional", "agency"],
+      "causal_refs": ["premise_role_rotation", "node_mobile_month_1"]
+    },
+    {
+      "op_id": "ningbo_op_family_tension",
+      "target_type": "tension",
+      "operation": "create",
+      "target_id": "ningbo_tension_family_boundary",
+      "target_label": "靠近家人与独立生活",
+      "before_state": null,
+      "after_state": "与父母距离更近，但独立居住让相处频率与边界仍需要实际形成。",
+      "dimensions": ["relational", "geography", "time", "agency"],
+      "causal_refs": ["premise_housing_yinzhou"]
+    },
+    {
+      "op_id": "ningbo_op_feedback_tension",
+      "target_type": "tension",
+      "operation": "create",
+      "target_id": "ningbo_tension_feedback",
+      "target_label": "完成流程与看见影响",
+      "before_state": null,
+      "after_state": "轮岗初期能看到任务是否流转完成，但个人投入怎样形成更长周期的岗位反馈仍不清晰。",
+      "dimensions": ["institutional", "skill", "agency"],
+      "causal_refs": ["premise_role_rotation", "node_mobile_month_1"]
+    }
+  ],
+  "causal_edges": [
+    {
+      "edge_id": "ningbo_edge_housing",
+      "cause_refs": ["premise_housing_yinzhou"],
+      "effect_op_ids": ["ningbo_op_housing", "ningbo_op_family_tension"],
+      "mechanism": "独立居住同时改变家庭距离、经济安排与私人空间，但不会预先决定亲密程度或心理感受。",
+      "strength": "grounded"
+    },
+    {
+      "edge_id": "ningbo_edge_role",
+      "cause_refs": ["premise_role_rotation", "node_mobile_month_1"],
+      "effect_op_ids": ["ningbo_op_role", "ningbo_op_role_tension", "ningbo_op_feedback_tension"],
+      "mechanism": "轮岗让最初的日常以理解业务流程为主，也把正式岗位去向与个人投入如何获得反馈保留为需要继续探索的变量。",
+      "strength": "grounded"
+    }
+  ],
+  "instantiated_uncertain_event_ids": [],
+  "generated_at": "2026-07-31T10:20:00Z"
+}

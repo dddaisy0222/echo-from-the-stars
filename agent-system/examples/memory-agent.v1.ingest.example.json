@@ -1,0 +1,28 @@
+{
+  "mode": "ingest",
+  "candidate_id": "candidate_journey_01_real_path",
+  "boundary_check": {
+    "accepted": true,
+    "required_layer": "core",
+    "violations": []
+  },
+  "normalized_content": {
+    "verbatim": "我最后留在杭州进了大厂",
+    "normalized": "留在杭州进入大厂"
+  },
+  "classification": {
+    "kind": "real_path",
+    "tags": ["career", "location", "journey_01"],
+    "sensitivity": "normal",
+    "retention": "persistent"
+  },
+  "relationship": {
+    "type": "novel",
+    "target_memory_ids": []
+  },
+  "proposal": {
+    "action": "store",
+    "requires_user_confirmation": false
+  },
+  "reason": "这是用户已在当前 Journey Seed 中确认的现实选择，可用于保持后续世界与现实基线连续。"
+}

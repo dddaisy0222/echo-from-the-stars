@@ -1,12 +1,18 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import {
+  rememberGeneratedWorld,
+  rememberOnboarding,
+  rememberReturnNote,
+  snapshotEchoMemory,
+  type MemorySnapshot,
+} from "./lib/echo-memory";
 
 type Stage =
   | "arrival"
   | "profile"
   | "threshold"
-  | "mode"
   | "interview"
   | "confirm"
   | "door"
@@ -17,10 +23,7 @@ type JourneyMode = "rewrite" | "replay" | "decide";
 
 type Profile = {
   name: string;
-  birthday: string;
   identity: string;
-  hometown: string;
-  mbti: string;
 };
 
 type WorldEvent = {
@@ -81,10 +84,7 @@ type Prompt = {
 
 const emptyProfile: Profile = {
   name: "",
-  birthday: "",
   identity: "",
-  hometown: "",
-  mbti: "",
 };
 
 const profilePrompts = [
@@ -96,31 +96,10 @@ const profilePrompts = [
     type: "text",
   },
   {
-    key: "birthday" as const,
-    label: "出生日期",
-    question: "你的出生日期是？",
-    placeholder: "",
-    type: "date",
-  },
-  {
     key: "identity" as const,
     label: "当前身份",
-    question: "你现在最常用哪个身份介绍自己？",
+    question: "你现在主要在做什么？",
     placeholder: "例如：产品经理、学生、正在创业的人",
-    type: "text",
-  },
-  {
-    key: "hometown" as const,
-    label: "成长地点",
-    question: "你主要在哪里长大？",
-    placeholder: "一个城市或地方",
-    type: "text",
-  },
-  {
-    key: "mbti" as const,
-    label: "MBTI · 可跳过",
-    question: "如果你知道自己的 MBTI，可以告诉我。",
-    placeholder: "例如：INFP",
     type: "text",
   },
 ];
@@ -128,15 +107,15 @@ const profilePrompts = [
 const journeyPrompts: Record<JourneyMode, Prompt[]> = {
   rewrite: [
     {
-      kicker: "时间坐标",
-      question: "你想回到人生中的哪个选择？",
-      helper: "不用讲完整故事，一个具体时刻就够。",
-      suggestions: ["一次工作选择", "一段关系", "一座没去的城市"],
+      kicker: "没有走的路",
+      question: "当时摆在你面前、但你最终没有选的那条路，是什么？",
+      helper: "一句话就够。比如：去伦敦加入一家刚起步的 AI 公司。",
+      suggestions: ["没去的那座城市", "没接的那份工作", "没开始的那件事"],
     },
     {
       kicker: "现实锚点",
-      question: "那一次，你最后做了什么选择？",
-      helper: "只写真实发生过的事。它会成为现在这条时间线的锚点。",
+      question: "现实里，你最后选了什么？",
+      helper: "只写真实发生过的事。这里不会替你改写现实。",
     },
     {
       kicker: "选择逻辑",
@@ -145,13 +124,14 @@ const journeyPrompts: Record<JourneyMode, Prompt[]> = {
       suggestions: ["我更想要稳定", "我不想让人失望", "我当时还没准备好"],
     },
     {
-      kicker: "唯一变量",
-      question: "如果只改一件事，你希望当时的自己怎么选？",
-      helper: "我们只改变一个变量，其他条件尽量保持真实。",
+      kicker: "不能丢下的东西",
+      question: "无论走哪条路，你都不愿意失去什么？",
+      helper: "可以是一个人、一种生活，或者你很在意的自己。",
+      suggestions: ["和重要的人的关系", "对生活的选择权", "我仍然喜欢的自己"],
     },
     {
-      kicker: "五年后的回声",
-      question: "你最想问那个已经沿这条路生活了五年的自己什么？",
+      kicker: "第一句话",
+      question: "见到那个真的走了这条路的自己，你最想先问什么？",
       helper: "这会成为你们见面时的第一句话。",
       suggestions: ["你后悔吗？", "你失去了什么？", "你现在快乐吗？"],
     },
@@ -218,21 +198,6 @@ const journeyPrompts: Record<JourneyMode, Prompt[]> = {
   ],
 };
 
-const modeCopy: Record<JourneyMode, { title: string; description: string }> = {
-  rewrite: {
-    title: "改写一条岔路",
-    description: "改变一个真实选择，看它如何继续生活下去。",
-  },
-  replay: {
-    title: "重返一段时间",
-    description: "不改变任何事，只让那段人生重新变得可触碰。",
-  },
-  decide: {
-    title: "预演一个未来",
-    description: "让几种选择先生活一段时间，再回来决定。",
-  },
-};
-
 function buildWorldState(
   profile: Profile,
   timeline: Timeline,
@@ -243,7 +208,7 @@ function buildWorldState(
     mode === "replay"
       ? `重新回到：${answers[0] || "一段很想念的生活"}`
       : mode === "rewrite"
-        ? `如果那一次，我选择了：${answers[3] || "另一条路"}`
+        ? `如果那一次，我选择了：${answers[0] || "另一条路"}`
         : `如果现在，我选择：${answers[1] || "其中一条路"}`;
 
   const expectation =
@@ -252,7 +217,7 @@ function buildWorldState(
     mode === "decide"
       ? answers[3]
       : mode === "rewrite"
-        ? answers[2]
+        ? `为了这条路，你必须重新安排「${answers[3] || "现实中重要的人与生活"}」`
         : "那段时间终究会继续向前";
 
   const desire =
@@ -260,7 +225,7 @@ function buildWorldState(
       ? answers[2] || "让生活重新拥有选择"
       : mode === "replay"
         ? answers[3] || "重新感到生活正在发生"
-        : answers[3] || "走向那条没有保证的路";
+        : answers[0] || "走向那条没有保证的路";
   const fear =
     mode === "decide"
       ? answers[3] || "失去现在拥有的确定感"
@@ -269,7 +234,7 @@ function buildWorldState(
         : "知道这段时间终究会结束";
   const alternative =
     mode === "rewrite"
-      ? answers[3] || "做出另一个选择"
+      ? answers[0] || "做出另一个选择"
       : mode === "decide"
         ? answers[1] || "选择其中一条路"
         : answers[0] || "重新回到那段时间";
@@ -431,14 +396,14 @@ function buildWorldState(
     fixedFacts: [
       `现实中的你最终选择：${answers[1] || "当前这条生活"}`,
       `你当时/现在的真实顾虑：${fear}`,
-      `${profile.identity || "你现在的身份"}与已有关系不会凭空消失`,
+      `你不愿失去：${answers[3] || "现实里重要的人与生活"}`,
     ],
     changedVariable: alternative,
     centralTension: mode === "replay" ? "怀念与继续生活" : `${desire} 与 ${fear}`,
     userModel: {
       desires: [desire],
       fears: [fear],
-      attachments: [profile.hometown || "熟悉的生活", "重要的人与已有关系"],
+      attachments: [answers[3] || "重要的人与已有关系"],
       hypothesis:
         mode === "replay"
           ? "你想回去的也许不是某个年代，而是当时仍能被你清楚感受到的生活。"
@@ -477,12 +442,12 @@ export default function Home() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationNote, setGenerationNote] = useState("");
   const [returnNote, setReturnNote] = useState("");
+  const [memorySnapshot, setMemorySnapshot] = useState<MemorySnapshot | null>(null);
   const recognitionRef = useRef<{ stop?: () => void } | null>(null);
 
   const prompts = journeyPrompts[mode];
   const currentPrompt = prompts[interviewStep];
   const currentProfilePrompt = profilePrompts[profileStep];
-  const birthYear = profile.birthday ? profile.birthday.slice(0, 4) : "—";
 
   useEffect(() => {
     const query = new URLSearchParams(window.location.search);
@@ -490,6 +455,7 @@ export default function Home() {
     try {
       const stored = window.localStorage.getItem("echo.worldState");
       if (stored) setWorldState(JSON.parse(stored));
+      setMemorySnapshot(snapshotEchoMemory());
     } catch {
       // The return scene still works if local storage is unavailable.
     }
@@ -498,7 +464,7 @@ export default function Home() {
 
   const routeLabel = useMemo(() => {
     if (mode === "replay") return answers[0] || "一段想念的时间";
-    if (mode === "rewrite") return answers[3] || "没走的那条路";
+    if (mode === "rewrite") return answers[0] || "没走的那条路";
     return answers[1] || "一个尚未发生的未来";
   }, [answers, mode]);
 
@@ -510,7 +476,7 @@ export default function Home() {
   function submitProfile(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const value = profile[currentProfilePrompt.key].trim();
-    if (!value && currentProfilePrompt.key !== "mbti") return;
+    if (!value) return;
     if (profileStep < profilePrompts.length - 1) {
       setProfileStep((step) => step + 1);
       return;
@@ -518,19 +484,9 @@ export default function Home() {
     setStage("threshold");
   }
 
-  function skipMbti() {
-    setProfile((current) => ({ ...current, mbti: "" }));
-    setStage("threshold");
-  }
-
-  function chooseTimeline(nextTimeline: Timeline) {
-    setTimeline(nextTimeline);
-    setMode(nextTimeline === "past" ? "rewrite" : "decide");
-    setStage("mode");
-  }
-
-  function chooseMode(nextMode: JourneyMode) {
-    setMode(nextMode);
+  function beginUnchosenLife() {
+    setTimeline("past");
+    setMode("rewrite");
     setAnswers([]);
     setInterviewStep(0);
     setDraft("");
@@ -622,6 +578,9 @@ export default function Home() {
 
     setWorldState(nextWorld);
     window.localStorage.setItem("echo.worldState", JSON.stringify(nextWorld));
+    rememberOnboarding(profile, answers);
+    const memory = rememberGeneratedWorld(nextWorld);
+    setMemorySnapshot(snapshotEchoMemory(memory));
     ["gain", "cost", "truth"].forEach((id) =>
       window.sessionStorage.removeItem(`echo.inventory.${id}`),
     );
@@ -638,16 +597,13 @@ export default function Home() {
   function loadDemo() {
     const demoProfile = {
       name: "小袁",
-      birthday: "2002-02-22",
       identity: "正在寻找自己方向的产品经理",
-      hometown: "杭州",
-      mbti: "INFP",
     };
     const demoAnswers = [
-      "毕业时，我同时拿到一份稳定大厂工作和一个去伦敦做 AI 创业的机会",
+      "去伦敦，加入一家刚起步的 AI 公司",
       "我最后留在了稳定的工作里",
       "我怕自己能力不够，也舍不得已经建立好的关系",
-      "去伦敦，加入那个还没有答案的小团队",
+      "和重要的人的关系，还有对生活的选择权",
       "你真的更自由了吗，还是只是换了一种焦虑？",
     ];
     const demoWorld = buildWorldState(demoProfile, "past", "rewrite", demoAnswers);
@@ -657,6 +613,9 @@ export default function Home() {
     setAnswers(demoAnswers);
     setWorldState(demoWorld);
     window.localStorage.setItem("echo.worldState", JSON.stringify(demoWorld));
+    rememberOnboarding(demoProfile, demoAnswers);
+    const memory = rememberGeneratedWorld(demoWorld);
+    setMemorySnapshot(snapshotEchoMemory(memory));
     window.sessionStorage.removeItem("echo.chat.messages.echo-childhood-self");
     setStage("door");
   }
@@ -683,7 +642,6 @@ export default function Home() {
     arrival: 0,
     profile: 1,
     threshold: 2,
-    mode: 2,
     interview: 3,
     confirm: 4,
     door: 5,
@@ -754,11 +712,11 @@ export default function Home() {
       {stage === "profile" && (
         <section className="profile-screen content-shell">
           <div className="identity-build">
-            <p className="overline">ARRIVAL RECORD · {profileStep + 1}/5</p>
+            <p className="overline">ARRIVAL RECORD · {profileStep + 1}/2</p>
             <h2>建立你在这个世界的初始坐标</h2>
             <p>
-              这些信息只帮助世界找到你。给得越完整，门后的生活越接近你；
-              它们不会成为对你的定义。
+              这里只需要一个最小身份。Echo 不用测试定义你，
+              它会在你真正做选择时慢慢认识你。
             </p>
             <div className="identity-figure">
               <div className="identity-core">
@@ -766,10 +724,7 @@ export default function Home() {
               </div>
               <ul>
                 <li className={profile.name ? "is-known" : ""}>称呼</li>
-                <li className={profile.birthday ? "is-known" : ""}>时间</li>
                 <li className={profile.identity ? "is-known" : ""}>身份</li>
-                <li className={profile.hometown ? "is-known" : ""}>地点</li>
-                <li className={profile.mbti ? "is-known" : ""}>性格线索</li>
               </ul>
             </div>
           </div>
@@ -784,24 +739,15 @@ export default function Home() {
               value={profile[currentProfilePrompt.key]}
               placeholder={currentProfilePrompt.placeholder}
               autoFocus
-              maxLength={currentProfilePrompt.key === "mbti" ? 4 : 40}
+              maxLength={40}
               onChange={(event) =>
                 setProfile((current) => ({
                   ...current,
-                  [currentProfilePrompt.key]:
-                    currentProfilePrompt.key === "mbti"
-                      ? event.target.value.toUpperCase()
-                      : event.target.value,
+                  [currentProfilePrompt.key]: event.target.value,
                 }))
               }
             />
-            {currentProfilePrompt.key === "mbti" ? (
-              <p className="field-note">
-                MBTI 只会作为行为生成的一条弱线索，并会被你后续的真实选择持续修正。
-              </p>
-            ) : (
-              <p className="field-note">直接回答就好，不需要写完整句子。</p>
-            )}
+            <p className="field-note">直接回答就好，不需要写完整句子。</p>
             <div className="card-actions">
               {profileStep > 0 && (
                 <button
@@ -810,11 +756,6 @@ export default function Home() {
                   onClick={() => setProfileStep((step) => step - 1)}
                 >
                   上一步
-                </button>
-              )}
-              {currentProfilePrompt.key === "mbti" && (
-                <button className="quiet-button" type="button" onClick={skipMbti}>
-                  我不知道，跳过
                 </button>
               )}
               <button className="solid-button" type="submit">
@@ -828,89 +769,40 @@ export default function Home() {
       {stage === "threshold" && (
         <section className="threshold-screen content-shell">
           <div className="threshold-heading">
-            <p className="overline">TEMPORAL THRESHOLD</p>
+            <p className="overline">THE UNCHOSEN LIFE</p>
             <span className="coordinate">
-              {profile.name || "旅行者"} · {birthYear} · {profile.hometown || "未知地点"}
+              {profile.name || "旅行者"} · {profile.identity || "现在的你"}
             </span>
-            <h2>你最想从哪里重新出发？</h2>
-            <p>一扇门回到已经发生的时间，一扇门通向仍未发生的时间。</p>
+            <h2>你没选的那条路，<br />没有停在那一天。</h2>
+            <p>它已经继续向前生活。先告诉我是哪条路，我会找到那扇只属于你的门。</p>
           </div>
-          <div className="time-axis">
+          <div className="time-axis single-threshold">
             <button
-              className="time-door past-door"
+              className="time-door past-door unchosen-door"
               type="button"
-              onClick={() => chooseTimeline("past")}
+              onClick={beginUnchosenLife}
             >
               <span className="door-light" />
-              <small>← BEFORE NOW</small>
-              <strong>回去</strong>
-              <p>重返一段生活，或改写一个选择</p>
+              <small>WORLD 01 · NOT YET FOUND</small>
+              <strong>找到那条没走的路</strong>
+              <p>只改变当年的一个选择，让它承担真实的时间与代价</p>
             </button>
             <div className="present-marker">
               <span />
               <b>现在</b>
-              <small>你站在这里</small>
+              <small>所有世界都从这里返回</small>
             </div>
-            <button
-              className="time-door future-door"
-              type="button"
-              onClick={() => chooseTimeline("future")}
-            >
-              <span className="door-light" />
-              <small>AFTER NOW →</small>
-              <strong>向前</strong>
-              <p>让一个尚未发生的选择先生活五年</p>
-            </button>
           </div>
           <p className="threshold-note">
-            门不是传送装置。它是一条可进入、可质疑、会承担代价的人生模拟。
+            Demo 只打开一扇门：不是因为时间只有一个方向，而是先把一次相遇做得足够真实。
           </p>
-        </section>
-      )}
-
-      {stage === "mode" && (
-        <section className="mode-screen content-shell">
-          <div className="mode-heading">
-            <button className="inline-back" type="button" onClick={() => setStage("threshold")}>
-              ← 返回现在
-            </button>
-            <p className="overline">
-              {timeline === "past" ? "PAST / TWO WAYS BACK" : "FUTURE / POSSIBLE LIFE"}
-            </p>
-            <h2>{timeline === "past" ? "你想怎样回去？" : "先让未来替你生活一段时间"}</h2>
-          </div>
-          <div className={`mode-grid ${timeline === "future" ? "single-mode" : ""}`}>
-            {timeline === "past" ? (
-              <>
-                <button className="mode-card" type="button" onClick={() => chooseMode("replay")}>
-                  <span>01</span>
-                  <h3>{modeCopy.replay.title}</h3>
-                  <p>{modeCopy.replay.description}</p>
-                  <i>没有任何选择需要被修正。</i>
-                </button>
-                <button className="mode-card" type="button" onClick={() => chooseMode("rewrite")}>
-                  <span>02</span>
-                  <h3>{modeCopy.rewrite.title}</h3>
-                  <p>{modeCopy.rewrite.description}</p>
-                  <i>只改变一个变量，保留真实世界的约束。</i>
-                </button>
-              </>
-            ) : (
-              <button className="mode-card featured" type="button" onClick={() => chooseMode("decide")}>
-                <span>01</span>
-                <h3>{modeCopy.decide.title}</h3>
-                <p>{modeCopy.decide.description}</p>
-                <i>不是预测结果，而是把不同选择的交换显影出来。</i>
-              </button>
-            )}
-          </div>
         </section>
       )}
 
       {stage === "interview" && currentPrompt && (
         <section className="interview-screen content-shell">
           <aside className="interview-map">
-            <button className="inline-back" type="button" onClick={() => setStage("mode")}>
+            <button className="inline-back" type="button" onClick={() => setStage("threshold")}>
               ← 退出这次生成
             </button>
             <p className="overline">WORLD SEED · {interviewStep + 1}/{prompts.length}</p>
@@ -1007,18 +899,18 @@ export default function Home() {
           <div className="world-draft">
             <article>
               <span>01 · 事实</span>
-              <h3>{answers[0]}</h3>
-              <p>{answers[1]}</p>
+              <h3>未选择：{answers[0]}</h3>
+              <p>现实选择：{answers[1]}</p>
             </article>
             <article>
               <span>02 · 为什么</span>
-              <h3>{mode === "replay" ? "你想重新感受" : "你当时/现在在权衡"}</h3>
+              <h3>你当时这样选，是因为</h3>
               <p>{answers[2]}</p>
             </article>
             <article>
               <span>03 · 门后要验证</span>
               <h3>{routeLabel}</h3>
-              <p>你会问另一个自己：“{answers[4]}”</p>
+              <p>不应被模拟抹掉：{answers[3]}。你会问：“{answers[4]}”</p>
             </article>
           </div>
           <div className="confirm-actions">
@@ -1088,7 +980,7 @@ export default function Home() {
                 <b />
               </div>
             </div>
-            <p>{profile.name || "你"} / {profile.hometown || "某地"} / WORLD 01</p>
+            <p>{profile.name || "你"} / {profile.identity || "现在的身份"} / WORLD 01</p>
           </div>
         </section>
       )}
@@ -1111,6 +1003,18 @@ export default function Home() {
               <strong>选择权</strong>
               <p>{worldState?.action || "把向往缩小成今天可以开始的一步。"}</p>
             </div>
+            {memorySnapshot && (
+              <div className="memory-receipt">
+                <small>PERSONAL MEMORY AGENT · 暂时认识</small>
+                <p>{memorySnapshot.hypothesis}</p>
+                <span>
+                  现实记忆 {memorySnapshot.coreCount} 条 · 模拟档案{" "}
+                  {memorySnapshot.archiveCount} 条 · 假设置信度{" "}
+                  {Math.round(memorySnapshot.confidence * 100)}%
+                </span>
+                <i>模拟经历只进入 Archive，不会被写成你的现实。</i>
+              </div>
+            )}
             <label className="return-note">
               <span>留一句话给现在的自己 · 可选</span>
               <textarea
@@ -1123,8 +1027,15 @@ export default function Home() {
               <button className="primary-cta" type="button" onClick={restart}>
                 回到现在 <span>→</span>
               </button>
-              <button className="text-cta" type="button" onClick={() => setStage("threshold")}>
-                去看另一扇门
+              <button
+                className="text-cta"
+                type="button"
+                onClick={() => {
+                  const memory = rememberReturnNote(returnNote);
+                  setMemorySnapshot(snapshotEchoMemory(memory));
+                }}
+              >
+                把这句话留给 Echo
               </button>
             </div>
           </div>

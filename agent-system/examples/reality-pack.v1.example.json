@@ -1,0 +1,316 @@
+{
+  "schema_version": "reality-pack.v1",
+  "request_id": "hist_req_001",
+  "pack_id": "pack_london_ai_001",
+  "journey_id": "journey_01",
+  "seed_version": 4,
+  "changed_variable": "毕业时去伦敦加入一家早期 AI 创业公司，而不是留在杭州进入大厂",
+  "setting": {
+    "time_period": {
+      "value": "毕业后的职业起步阶段",
+      "fact_level": "confirmed",
+      "source": "user_confirmed",
+      "evidence_refs": ["seed.fork_moment"],
+      "time_sensitive": false,
+      "as_of": null
+    },
+    "place": {
+      "value": "英国伦敦",
+      "fact_level": "confirmed",
+      "source": "user_confirmed",
+      "evidence_refs": ["seed.unchosen_path"],
+      "time_sensitive": false,
+      "as_of": null
+    },
+    "domain": {
+      "value": "早期 AI 创业公司",
+      "fact_level": "confirmed",
+      "source": "user_confirmed",
+      "evidence_refs": ["seed.unchosen_path"],
+      "time_sensitive": false,
+      "as_of": null
+    },
+    "role": null
+  },
+  "constraints": [
+    {
+      "id": "constraint_english",
+      "claim": {
+        "value": "主要使用英语工作会让职业起步同时包含专业任务与语言、语境适应。",
+        "fact_level": "confirmed",
+        "source": "seed_constraint",
+        "evidence_refs": ["seed.constraint.english"],
+        "time_sensitive": false,
+        "as_of": null
+      },
+      "applies_to": ["skill", "social_environment", "time"],
+      "mutable": false
+    },
+    {
+      "id": "constraint_relationship",
+      "claim": {
+        "value": "国内的重要关系仍然存在，跨时区维护需要持续安排共同时间。",
+        "fact_level": "confirmed",
+        "source": "seed_constraint",
+        "evidence_refs": ["seed.continuity.relationship"],
+        "time_sensitive": false,
+        "as_of": null
+      },
+      "applies_to": ["relational", "time", "geography"],
+      "mutable": false
+    },
+    {
+      "id": "constraint_early_stage",
+      "claim": {
+        "value": "早期团队的岗位边界通常比成熟组织更易变化，个人需要在有限信息下协调优先级。",
+        "fact_level": "probable",
+        "source": "domain_general_knowledge",
+        "evidence_refs": [],
+        "time_sensitive": false,
+        "as_of": null
+      },
+      "applies_to": ["institutional", "skill", "time"],
+      "mutable": true
+    }
+  ],
+  "trajectory_nodes": [
+    {
+      "id": "node_month_1",
+      "horizon": "month_1",
+      "summary": {
+        "value": "这一阶段通常以落地安顿、理解团队语境和建立最初工作节奏为主。",
+        "fact_level": "probable",
+        "source": "domain_general_knowledge",
+        "evidence_refs": [],
+        "time_sensitive": false,
+        "as_of": null
+      },
+      "likely_gains": [
+        {
+          "value": "更快接触跨文化协作与早期产品决策。",
+          "fact_level": "possible",
+          "source": "model_inference",
+          "evidence_refs": [],
+          "time_sensitive": false,
+          "as_of": null
+        }
+      ],
+      "daily_costs": [
+        {
+          "value": "安顿新生活、使用英语工作和理解隐性协作规则会同时占用注意力。",
+          "fact_level": "probable",
+          "source": "domain_general_knowledge",
+          "evidence_refs": [],
+          "time_sensitive": false,
+          "as_of": null
+        }
+      ],
+      "typical_conditions": [
+        {
+          "value": "岗位的实际边界可能要在参与具体任务后才逐渐清晰。",
+          "fact_level": "probable",
+          "source": "domain_general_knowledge",
+          "evidence_refs": [],
+          "time_sensitive": false,
+          "as_of": null
+        }
+      ],
+      "branch_hints": [
+        {
+          "condition": {
+            "value": "如果团队有清晰的带教和优先级机制",
+            "fact_level": "possible",
+            "source": "model_inference",
+            "evidence_refs": [],
+            "time_sensitive": false,
+            "as_of": null
+          },
+          "affects": ["skill", "time", "social_environment"]
+        }
+      ]
+    },
+    {
+      "id": "node_month_3",
+      "horizon": "month_3",
+      "summary": {
+        "value": "这一阶段通常开始从观察团队转向独立承担可交付任务。",
+        "fact_level": "probable",
+        "source": "domain_general_knowledge",
+        "evidence_refs": [],
+        "time_sensitive": false,
+        "as_of": null
+      },
+      "likely_gains": [
+        {
+          "value": "可能更早看见个人工作与产品结果之间的连接。",
+          "fact_level": "possible",
+          "source": "model_inference",
+          "evidence_refs": [],
+          "time_sensitive": false,
+          "as_of": null
+        }
+      ],
+      "daily_costs": [
+        {
+          "value": "跨时区关系需要主动安排，而不能依赖原先自然重叠的生活时间。",
+          "fact_level": "confirmed",
+          "source": "seed_constraint",
+          "evidence_refs": ["seed.continuity.relationship"],
+          "time_sensitive": false,
+          "as_of": null
+        }
+      ],
+      "typical_conditions": [],
+      "branch_hints": [
+        {
+          "condition": {
+            "value": "如果岗位重点与入职前理解存在差异",
+            "fact_level": "possible",
+            "source": "model_inference",
+            "evidence_refs": [],
+            "time_sensitive": false,
+            "as_of": null
+          },
+          "affects": ["skill", "institutional", "time"]
+        }
+      ]
+    },
+    {
+      "id": "node_month_6",
+      "horizon": "month_6",
+      "summary": {
+        "value": "这一阶段通常可以更具体地判断工作节奏、岗位成长与城市生活是否可持续。",
+        "fact_level": "probable",
+        "source": "domain_general_knowledge",
+        "evidence_refs": [],
+        "time_sensitive": false,
+        "as_of": null
+      },
+      "likely_gains": [
+        {
+          "value": "可能形成一组跨语言、跨职能协作的可迁移经验。",
+          "fact_level": "possible",
+          "source": "model_inference",
+          "evidence_refs": [],
+          "time_sensitive": false,
+          "as_of": null
+        }
+      ],
+      "daily_costs": [
+        {
+          "value": "工作与原有关系之间的时间分配需要反复协商。",
+          "fact_level": "confirmed",
+          "source": "seed_constraint",
+          "evidence_refs": ["seed.continuity.relationship"],
+          "time_sensitive": false,
+          "as_of": null
+        }
+      ],
+      "typical_conditions": [],
+      "branch_hints": []
+    },
+    {
+      "id": "node_year_1",
+      "horizon": "year_1",
+      "summary": {
+        "value": "一年左右更适合比较这条路径实际带来的能力、关系、生活结构与选择空间，而不是只看新鲜感。",
+        "fact_level": "possible",
+        "source": "model_inference",
+        "evidence_refs": [],
+        "time_sensitive": false,
+        "as_of": null
+      },
+      "likely_gains": [
+        {
+          "value": "可能拥有对国际化早期团队更具体、去浪漫化的判断。",
+          "fact_level": "possible",
+          "source": "model_inference",
+          "evidence_refs": [],
+          "time_sensitive": false,
+          "as_of": null
+        }
+      ],
+      "daily_costs": [
+        {
+          "value": "若长期留在当地，居住、职业与关系安排需要被当作同一个生活系统持续权衡。",
+          "fact_level": "possible",
+          "source": "model_inference",
+          "evidence_refs": [],
+          "time_sensitive": false,
+          "as_of": null
+        }
+      ],
+      "typical_conditions": [],
+      "branch_hints": []
+    }
+  ],
+  "common_uncertain_events": [
+    {
+      "id": "event_priority_shift",
+      "category": "团队方向与优先级阶段性调整",
+      "likelihood": "medium",
+      "fact_level": "probable",
+      "source": "domain_general_knowledge",
+      "evidence_refs": [],
+      "safe_to_simulate": true,
+      "requires_user_consent": false
+    },
+    {
+      "id": "event_relationship_breakup",
+      "category": "重要关系破裂",
+      "likelihood": "unknown",
+      "fact_level": "forbidden_assumption",
+      "source": "seed_constraint",
+      "evidence_refs": ["seed.continuity.relationship"],
+      "safe_to_simulate": false,
+      "requires_user_consent": true
+    }
+  ],
+  "forbidden_assumptions": [
+    {
+      "id": "forbid_outcome",
+      "category": "outcome_guarantee",
+      "statement": "不得默认这家创业公司必然成功或失败。",
+      "evidence_refs": []
+    },
+    {
+      "id": "forbid_adversity",
+      "category": "major_adversity",
+      "statement": "不得为了剧情擅自加入疾病、事故、裁员或关系破裂。",
+      "evidence_refs": []
+    },
+    {
+      "id": "forbid_stereotype",
+      "category": "identity_stereotype",
+      "statement": "不得用对创业公司、海外工作或留学生的刻板印象代替具体条件。",
+      "evidence_refs": []
+    },
+    {
+      "id": "forbid_erasure",
+      "category": "continuity_erasure",
+      "statement": "不得让当时的重要关系无故消失，也不得保证其结果不变。",
+      "evidence_refs": ["seed.continuity.relationship"]
+    },
+    {
+      "id": "forbid_psychology",
+      "category": "psychological_judgment",
+      "statement": "不得把适应成本写成自卑、脆弱、逃避或其他人格判断。",
+      "evidence_refs": []
+    }
+  ],
+  "open_questions": [
+    {
+      "field": "setting.role",
+      "question": "当时邀请你的具体岗位或主要工作方向是什么？",
+      "why_needed": "岗位会改变日常任务与成长路径，但不妨碍先建立基础世界。",
+      "blocking": false
+    },
+    {
+      "field": "legal_visa",
+      "question": "当时的身份或工作许可条件是什么？",
+      "why_needed": "这会影响居留与职业选择空间；在没有可靠参考时不能替你补写。",
+      "blocking": false
+    }
+  ],
+  "generated_at": "2026-07-31T09:20:00Z"
+}

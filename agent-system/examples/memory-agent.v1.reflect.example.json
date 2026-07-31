@@ -1,0 +1,27 @@
+{
+  "mode": "reflect",
+  "proposals": [
+    {
+      "proposal_key": "career_migration.agency_vs_relationship",
+      "statement": "在涉及职业迁移的选择中，用户可能会同时确认决定是否由自己做出，以及重要关系能否继续存在。",
+      "scope": "recurring_tension",
+      "supporting_evidence_ids": [
+        "mem_core_target_question_01",
+        "mem_observed_node_choice_02"
+      ],
+      "counter_evidence_ids": [
+        "mem_core_no_regret_01"
+      ],
+      "context_keys": [
+        "journey:journey_01:onboarding",
+        "world:world_01:node:node_02"
+      ],
+      "missing_evidence": [
+        "尚不知道这一关注是否会在非职业迁移的选择中重复出现。"
+      ],
+      "falsification_condition": "在新的职业迁移选择中，用户明确表示自主决定与关系连续性都不重要，而更持续关注其他维度。",
+      "user_facing_copy": "Echo 暂时注意到：在这次职业迁移里，你似乎同时在确认两件事——决定是不是由自己做的，以及重要的关系会不会因此被写掉。这还不是结论。"
+    }
+  ],
+  "insufficient_evidence": []
+}

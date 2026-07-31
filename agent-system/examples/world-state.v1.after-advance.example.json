@@ -1,0 +1,107 @@
+{
+  "schema_version": "world-state.v1",
+  "world_id": "world_london_ai_001",
+  "journey_id": "journey_01",
+  "seed_version": 4,
+  "pack_id": "pack_london_ai_001",
+  "state_version": 2,
+  "simulation_label": "counterfactual_simulation",
+  "current_horizon": "month_3",
+  "variables": [
+    {
+      "variable_id": "var_work_context",
+      "label": "工作适应",
+      "state": "开始独立承担任务，也需要把私人时间边界翻译成清晰的优先级与交付沟通。",
+      "dimensions": ["skill", "time", "institutional", "agency"],
+      "status": "active",
+      "provenance_refs": [
+        "constraint_english",
+        "constraint_early_stage",
+        "node_month_1",
+        "op_create_work_context",
+        "event_choice_001",
+        "choice_protect_shared_time",
+        "var_work_context",
+        "node_month_3",
+        "op_update_work_context"
+      ],
+      "updated_transition_id": "transition_002"
+    },
+    {
+      "variable_id": "var_shared_time",
+      "label": "关系共同时间",
+      "state": "每周已预留一段固定的跨时区共同时间，临时变化需要主动协商。",
+      "dimensions": ["relational", "time", "geography", "agency"],
+      "status": "active",
+      "provenance_refs": [
+        "constraint_relationship",
+        "core_seed_continuity_relationship",
+        "op_create_shared_time",
+        "event_choice_001",
+        "choice_protect_shared_time",
+        "var_shared_time",
+        "op_update_shared_time"
+      ],
+      "updated_transition_id": "transition_002"
+    }
+  ],
+  "tensions": [
+    {
+      "tension_id": "tension_scope",
+      "label": "职责边界与学习速度",
+      "state": "需要一边理解岗位期待，一边避免在信息不足时接下过多任务。",
+      "dimensions": ["skill", "time", "institutional", "agency"],
+      "status": "active",
+      "provenance_refs": [
+        "constraint_early_stage",
+        "node_month_1",
+        "op_create_scope_tension"
+      ],
+      "updated_transition_id": "transition_001"
+    },
+    {
+      "tension_id": "tension_shared_time",
+      "label": "新生活与原有关系",
+      "state": "共同时间已有边界，新的张力变成如何在临时工作要求出现时维持并协商这项边界。",
+      "dimensions": ["relational", "time", "institutional", "agency"],
+      "status": "transformed",
+      "provenance_refs": [
+        "constraint_relationship",
+        "core_seed_continuity_relationship",
+        "op_create_relationship_tension",
+        "event_choice_001",
+        "choice_protect_shared_time",
+        "tension_shared_time",
+        "constraint_early_stage",
+        "op_transform_relationship_tension"
+      ],
+      "updated_transition_id": "transition_002"
+    }
+  ],
+  "experienced_nodes": [
+    {
+      "node_id": "world_node_001",
+      "transition_id": "transition_001",
+      "horizon": "month_1",
+      "summary": "最初一个月开始建立工作适应、共同时间与两项仍未解决的生活张力。",
+      "committed_choice_event_id": null
+    },
+    {
+      "node_id": "world_node_002",
+      "transition_id": "transition_002",
+      "horizon": "month_3",
+      "summary": "固定共同时间改变了时间配置，也让边界如何进入工作协商成为新的日常任务。",
+      "committed_choice_event_id": "event_choice_001"
+    }
+  ],
+  "pending_choice": {
+    "node_id": "world_node_002",
+    "choice_ids": [
+      "choice_negotiate_delivery",
+      "choice_trade_one_evening",
+      "choice_decline_extra_scope"
+    ]
+  },
+  "last_transition_id": "transition_002",
+  "updated_at": "2026-07-31T09:45:00Z"
+}

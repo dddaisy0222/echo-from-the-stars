@@ -1,0 +1,73 @@
+{
+  "schema_version": "echo-agent-output.v1",
+  "request_id": "echo_req_ningbo_001",
+  "reply_id": "echo_reply_ningbo_001",
+  "journey_id": "journey_ningbo_mobile_001",
+  "world_id": "world_ningbo_mobile_001",
+  "world_state_version": 4,
+  "reply": {
+    "text": "好不好我现在也说不死。至少我这边，晚上确实能完整留下来；可把时间空出来以后，我才发现“有时间”和“知道拿它做什么”是两回事。这个问题我到现在也没答完。",
+    "register": "reflective",
+    "move": "answer",
+    "epistemic_position": "present_stance",
+    "follow_up_question": null
+  },
+  "claims": [
+    {
+      "claim_id": "claim_ningbo_001",
+      "text_span": "好不好我现在也说不死",
+      "epistemic_status": "explicit_unknown",
+      "evidence_refs": []
+    },
+    {
+      "claim_id": "claim_ningbo_002",
+      "text_span": "至少我这边，晚上确实能完整留下来",
+      "epistemic_status": "grounded_current_state",
+      "evidence_refs": [
+        "var_evening_boundary",
+        "commit_evening_boundary"
+      ]
+    },
+    {
+      "claim_id": "claim_ningbo_003",
+      "text_span": "把时间空出来以后，我才发现“有时间”和“知道拿它做什么”是两回事",
+      "epistemic_status": "bounded_inference",
+      "evidence_refs": [
+        "tension_free_time_use",
+        "mem_arc_evening_self_report"
+      ]
+    },
+    {
+      "claim_id": "claim_ningbo_004",
+      "text_span": "这个问题我到现在也没答完",
+      "epistemic_status": "current_subjective_stance",
+      "evidence_refs": []
+    }
+  ],
+  "resonance": {
+    "mode": "earned_reframe",
+    "sentence": "可把时间空出来以后，我才发现“有时间”和“知道拿它做什么”是两回事。",
+    "source_claim_ids": [
+      "claim_ningbo_002",
+      "claim_ningbo_003"
+    ],
+    "interpretive_owner": "parallel_self"
+  },
+  "used_evidence_ids": [
+    "var_evening_boundary",
+    "commit_evening_boundary",
+    "tension_free_time_use",
+    "mem_arc_evening_self_report"
+  ],
+  "withheld": [],
+  "continuity_candidates": [
+    {
+      "candidate_id": "echo_continuity_candidate_001",
+      "claim_id": "claim_ningbo_004",
+      "kind": "current_view",
+      "content": "Echo 目前仍未判断稳定是否更好。",
+      "retention": "journey"
+    }
+  ],
+  "generated_at": "2026-07-31T10:30:00.000Z"
+}

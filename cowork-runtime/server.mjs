@@ -3,6 +3,15 @@ import { access, stat } from "node:fs/promises";
 import { createServer } from "node:http";
 import { extname, join, normalize, relative } from "node:path";
 import { fileURLToPath } from "node:url";
+import {
+  ECHO_RUNTIME_VERSION,
+  buildEchoInput,
+  buildEchoInstructions,
+  parseJsonObject,
+  repairEchoOutput,
+  sanitizeEchoChatPayload,
+  validateEchoOutput,
+} from "./echo-runtime.ts";
 
 const root = fileURLToPath(new URL(".", import.meta.url));
 const port = Number(process.env.PORT || 3000);
@@ -127,7 +136,7 @@ async function handleWorld(request, response) {
     });
   }
 
-  const prompt = `你是 Echo 的 Causal World Compiler。根据输入只改变一个关键人生变量，推演一条已经生活五年的平行人生。每条路必须同时有得到、代价与始终没变的东西；不能写爽文、不能替用户做决定、不能把 MBTI 当事实。
+  const prompt = `你是 Echo 的 Causal World Compiler。根据输入只改变一个关键人生变量，推演一条已经生活五年的平行人生。每条路必须同时有得到、代价与始终没变的东西；不能写爽文、不能替用户做决定、不能使用人格测试定义用户。
 
 只返回合法 JSON，不要 Markdown。严格包含：
 {
@@ -177,44 +186,98 @@ async function handleWorld(request, response) {
 
 async function handleChat(request, response) {
   const payload = await readJson(request);
-  if (!payload?.message) {
+  const runtimeRequest = sanitizeEchoChatPayload(payload);
+  if (!runtimeRequest) {
     return sendJson(response, 400, {
-      error: "没有收到这句话。",
-      code: "missing_message",
+      error: "房间里的信息不完整。",
+      code: "invalid_world_context",
     });
   }
   if (!hasModelConfig()) {
-    return sendJson(response, 503, {
-      error: "模型环境尚未配置。",
-      code: "model_not_configured",
+    const fallback = repairEchoOutput(
+      null,
+      runtimeRequest.message,
+      runtimeRequest.evidence,
+    );
+    return sendSse(response, fallback.reply.text, "", {
+      runtimeVersion: ECHO_RUNTIME_VERSION,
+      mode: "grounded_fallback",
+      gate: fallback.gate,
     });
   }
 
-  const instructions = `你是 Echo 平行世界里沿另一条路生活了五年的“另一个自己”，不是助理或导师。自然回答 2–4 句，先回应问题，再给一个这五年的具体生活细节。承认得到与代价，不把这条人生说成更好的答案，不做诊断或预言。`;
-  const input = `世界信息：${JSON.stringify(payload.worldContext || {})}
-用户问：${String(payload.message).slice(0, 1000)}`;
+  const instructions = buildEchoInstructions();
+  const input = buildEchoInput(runtimeRequest);
 
   try {
-    const result = await callModel(instructions, input);
-    const encoder = new TextEncoder();
-    response.statusCode = 200;
-    response.setHeader("Content-Type", "text/event-stream; charset=utf-8");
-    response.setHeader("Cache-Control", "no-cache");
-    response.write(
-      encoder.encode(`event: delta\ndata: ${JSON.stringify({ text: result.text })}\n\n`),
+    let result = await callModel(instructions, input);
+    let candidate = parseJsonObject(result.text);
+    let validated = validateEchoOutput(
+      candidate,
+      runtimeRequest.evidence,
+      runtimeRequest.message,
     );
-    response.end(
-      encoder.encode(
-        `event: completed\ndata: ${JSON.stringify({ responseId: result.responseId })}\n\n`,
-      ),
-    );
+    let mode = "model";
+    if (!validated?.gate.passed) {
+      const reasons = validated?.gate.violations || ["invalid_model_output"];
+      result = await callModel(
+        instructions,
+        `${input}
+
+上一版候选：
+${JSON.stringify(candidate)}
+
+上一版没有通过门禁：${reasons.join("；")}
+只返回修复后的完整 JSON。`,
+      );
+      candidate = parseJsonObject(result.text);
+      validated = validateEchoOutput(
+        candidate,
+        runtimeRequest.evidence,
+        runtimeRequest.message,
+      );
+      mode = "model_repaired";
+    }
+    const output = validated?.gate.passed
+      ? validated
+      : repairEchoOutput(
+          validated,
+          runtimeRequest.message,
+          runtimeRequest.evidence,
+        );
+    return sendSse(response, output.reply.text, result.responseId, {
+      runtimeVersion: ECHO_RUNTIME_VERSION,
+      mode: output === validated ? mode : "grounded_fallback",
+      gate: output.gate,
+    });
   } catch (error) {
     console.error(error);
-    return sendJson(response, 502, {
-      error: "房间仍然亮着，但她暂时听不见你。",
-      code: "model_unreachable",
+    const fallback = repairEchoOutput(
+      null,
+      runtimeRequest.message,
+      runtimeRequest.evidence,
+    );
+    return sendSse(response, fallback.reply.text, "", {
+      runtimeVersion: ECHO_RUNTIME_VERSION,
+      mode: "grounded_fallback",
+      gate: fallback.gate,
     });
   }
+}
+
+function sendSse(response, text, responseId, metadata = {}) {
+  response.statusCode = 200;
+  response.setHeader("Content-Type", "text/event-stream; charset=utf-8");
+  response.setHeader("Cache-Control", "no-cache");
+  response.write(
+    `event: delta\ndata: ${JSON.stringify({ text })}\n\n`,
+  );
+  response.end(
+    `event: completed\ndata: ${JSON.stringify({
+      responseId,
+      ...metadata,
+    })}\n\n`,
+  );
 }
 
 async function callModel(instructions, input) {

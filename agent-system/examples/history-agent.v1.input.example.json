@@ -1,0 +1,56 @@
+{
+  "schema_version": "history-agent-input.v1",
+  "request_id": "hist_req_001",
+  "pack_id": "pack_london_ai_001",
+  "journey_id": "journey_01",
+  "seed_version": 4,
+  "changed_variable": "毕业时去伦敦加入一家早期 AI 创业公司，而不是留在杭州进入大厂",
+  "changed_variable_fact_id": "seed.unchosen_path",
+  "input_facts": [
+    {
+      "fact_id": "seed.unchosen_path",
+      "kind": "changed_variable",
+      "value": "毕业时去伦敦加入一家早期 AI 创业公司",
+      "source": "user_confirmed",
+      "evidence_turn_ids": ["turn_03"]
+    },
+    {
+      "fact_id": "seed.fork_moment",
+      "kind": "fork_moment",
+      "value": "毕业时",
+      "source": "user_confirmed",
+      "evidence_turn_ids": ["turn_03"]
+    },
+    {
+      "fact_id": "seed.real_path",
+      "kind": "real_path",
+      "value": "留在杭州进入大厂",
+      "source": "user_confirmed",
+      "evidence_turn_ids": ["turn_04"]
+    },
+    {
+      "fact_id": "seed.constraint.english",
+      "kind": "reality_constraint",
+      "value": "工作环境主要使用英语",
+      "source": "seed_constraint",
+      "evidence_turn_ids": ["turn_07"]
+    },
+    {
+      "fact_id": "seed.continuity.relationship",
+      "kind": "valued_continuity",
+      "value": "不希望世界把当时的重要关系直接写没",
+      "source": "seed_constraint",
+      "evidence_turn_ids": ["turn_09"]
+    }
+  ],
+  "allowed_input_fact_ids": [
+    "seed.unchosen_path",
+    "seed.fork_moment",
+    "seed.real_path",
+    "seed.constraint.english",
+    "seed.continuity.relationship"
+  ],
+  "reference_facts": [],
+  "output_language": "zh-CN",
+  "generated_at": "2026-07-31T09:20:00Z"
+}

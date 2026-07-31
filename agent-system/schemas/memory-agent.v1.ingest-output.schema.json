@@ -1,0 +1,142 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://echo.local/schemas/memory-agent.v1.ingest-output.schema.json",
+  "title": "Echo Memory Agent Ingest Output v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "mode",
+    "candidate_id",
+    "boundary_check",
+    "normalized_content",
+    "classification",
+    "relationship",
+    "proposal",
+    "reason"
+  ],
+  "properties": {
+    "mode": { "const": "ingest" },
+    "candidate_id": { "$ref": "#/$defs/id" },
+    "boundary_check": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["accepted", "required_layer", "violations"],
+      "properties": {
+        "accepted": { "type": "boolean" },
+        "required_layer": {
+          "enum": ["core", "observed", "archive"]
+        },
+        "violations": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "truth_layer_mismatch",
+              "missing_user_evidence",
+              "missing_signed_event",
+              "missing_world_provenance",
+              "deleted_or_rejected_source",
+              "consent_missing",
+              "unnecessary_sensitive_detail",
+              "inference_presented_as_fact"
+            ]
+          }
+        }
+      }
+    },
+    "normalized_content": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["verbatim", "normalized"],
+      "properties": {
+        "verbatim": {
+          "type": ["string", "null"],
+          "maxLength": 2000
+        },
+        "normalized": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        }
+      }
+    },
+    "classification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "tags", "sensitivity", "retention"],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_.-]{1,79}$"
+        },
+        "tags": {
+          "type": "array",
+          "uniqueItems": true,
+          "maxItems": 12,
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9_.-]{1,80}$"
+          }
+        },
+        "sensitivity": {
+          "enum": ["normal", "sensitive", "restricted"]
+        },
+        "retention": {
+          "enum": ["session", "journey", "persistent"]
+        }
+      }
+    },
+    "relationship": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "target_memory_ids"],
+      "properties": {
+        "type": {
+          "enum": [
+            "novel",
+            "exact_duplicate",
+            "semantic_duplicate",
+            "update",
+            "conflict",
+            "temporal_successor"
+          ]
+        },
+        "target_memory_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "maxItems": 10,
+          "items": { "$ref": "#/$defs/id" }
+        }
+      }
+    },
+    "proposal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["action", "requires_user_confirmation"],
+      "properties": {
+        "action": {
+          "enum": [
+            "store",
+            "merge_provenance",
+            "supersede",
+            "mark_disputed",
+            "ignore",
+            "require_user_confirmation"
+          ]
+        },
+        "requires_user_confirmation": { "type": "boolean" }
+      }
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 600
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{1,159}$"
+    }
+  }
+}

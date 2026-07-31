@@ -49,6 +49,10 @@ export default defineConfig({
             join(coworkOut, runtimeFile),
           );
         }
+        copyFileSync(
+          join(projectRoot, "lib", "echo-runtime.ts"),
+          join(coworkOut, "echo-runtime.ts"),
+        );
 
         // CoWork injects an app-root <base> tag. The world page therefore
         // needs root-relative-to-that-base asset tags, while the duplicate

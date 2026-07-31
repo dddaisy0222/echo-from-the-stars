@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://echo.local/schemas/memory-agent.v1.retrieval-output.schema.json",
+  "title": "Echo Memory Agent Retrieval Assist Output v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["mode", "ranked", "excluded"],
+  "properties": {
+    "mode": { "const": "retrieval_assist" },
+    "ranked": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["memory_id", "reason"],
+        "properties": {
+          "memory_id": { "$ref": "#/$defs/id" },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 300
+          }
+        }
+      }
+    },
+    "excluded": {
+      "type": "array",
+      "maxItems": 40,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["memory_id", "reason"],
+        "properties": {
+          "memory_id": { "$ref": "#/$defs/id" },
+          "reason": {
+            "enum": [
+              "irrelevant",
+              "too_sensitive_for_task",
+              "redundant",
+              "stale",
+              "contested_hypothesis"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{1,159}$"
+    }
+  }
+}

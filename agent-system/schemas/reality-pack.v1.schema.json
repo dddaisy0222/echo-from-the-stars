@@ -1,0 +1,318 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://echo.local/schemas/reality-pack.v1.schema.json",
+  "title": "Echo Reality Pack v1",
+  "description": "History Agent 提议的现实底稿。它描述现实系统，不预测个人命运。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "request_id",
+    "pack_id",
+    "journey_id",
+    "seed_version",
+    "changed_variable",
+    "setting",
+    "constraints",
+    "trajectory_nodes",
+    "common_uncertain_events",
+    "forbidden_assumptions",
+    "open_questions",
+    "generated_at"
+  ],
+  "properties": {
+    "schema_version": { "const": "reality-pack.v1" },
+    "request_id": { "$ref": "#/$defs/id" },
+    "pack_id": { "$ref": "#/$defs/id" },
+    "journey_id": { "$ref": "#/$defs/id" },
+    "seed_version": { "type": "integer", "minimum": 1 },
+    "changed_variable": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500
+    },
+    "setting": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["time_period", "place", "domain", "role"],
+      "properties": {
+        "time_period": { "$ref": "#/$defs/nullableClaim" },
+        "place": { "$ref": "#/$defs/nullableClaim" },
+        "domain": { "$ref": "#/$defs/nullableClaim" },
+        "role": { "$ref": "#/$defs/nullableClaim" }
+      }
+    },
+    "constraints": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 12,
+      "items": { "$ref": "#/$defs/constraint" }
+    },
+    "trajectory_nodes": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 6,
+      "items": { "$ref": "#/$defs/trajectoryNode" }
+    },
+    "common_uncertain_events": {
+      "type": "array",
+      "maxItems": 8,
+      "items": { "$ref": "#/$defs/uncertainEvent" }
+    },
+    "forbidden_assumptions": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 12,
+      "items": { "$ref": "#/$defs/forbiddenAssumption" }
+    },
+    "open_questions": {
+      "type": "array",
+      "maxItems": 5,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["field", "question", "why_needed", "blocking"],
+        "properties": {
+          "field": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 160
+          },
+          "question": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 300
+          },
+          "why_needed": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "blocking": { "type": "boolean" }
+        }
+      }
+    },
+    "generated_at": { "type": "string", "format": "date-time" }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_.:-]{1,160}$"
+    },
+    "factLevel": {
+      "enum": ["confirmed", "probable", "possible", "forbidden_assumption"]
+    },
+    "sourceType": {
+      "enum": [
+        "user_confirmed",
+        "seed_constraint",
+        "verified_reference",
+        "domain_general_knowledge",
+        "model_inference"
+      ]
+    },
+    "dimension": {
+      "enum": [
+        "economic",
+        "relational",
+        "legal_visa",
+        "skill",
+        "time",
+        "health_baseline",
+        "caregiving",
+        "social_environment",
+        "geography",
+        "institutional"
+      ]
+    },
+    "claim": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "value",
+        "fact_level",
+        "source",
+        "evidence_refs",
+        "time_sensitive",
+        "as_of"
+      ],
+      "properties": {
+        "value": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1200
+        },
+        "fact_level": { "$ref": "#/$defs/factLevel" },
+        "source": { "$ref": "#/$defs/sourceType" },
+        "evidence_refs": {
+          "type": "array",
+          "maxItems": 12,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/id" }
+        },
+        "time_sensitive": { "type": "boolean" },
+        "as_of": {
+          "type": ["string", "null"],
+          "maxLength": 100
+        }
+      }
+    },
+    "nullableClaim": {
+      "oneOf": [
+        { "type": "null" },
+        { "$ref": "#/$defs/claim" }
+      ]
+    },
+    "constraint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "claim", "applies_to", "mutable"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "claim": { "$ref": "#/$defs/claim" },
+        "applies_to": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/dimension" }
+        },
+        "mutable": { "type": "boolean" }
+      }
+    },
+    "trajectoryNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "horizon",
+        "summary",
+        "likely_gains",
+        "daily_costs",
+        "typical_conditions",
+        "branch_hints"
+      ],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "horizon": {
+          "enum": [
+            "week_1_2",
+            "month_1",
+            "month_3",
+            "month_6",
+            "year_1",
+            "year_2_plus"
+          ]
+        },
+        "summary": { "$ref": "#/$defs/claim" },
+        "likely_gains": {
+          "type": "array",
+          "maxItems": 6,
+          "items": { "$ref": "#/$defs/claim" }
+        },
+        "daily_costs": {
+          "type": "array",
+          "maxItems": 6,
+          "items": { "$ref": "#/$defs/claim" }
+        },
+        "typical_conditions": {
+          "type": "array",
+          "maxItems": 8,
+          "items": { "$ref": "#/$defs/claim" }
+        },
+        "branch_hints": {
+          "type": "array",
+          "maxItems": 6,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["condition", "affects"],
+            "properties": {
+              "condition": { "$ref": "#/$defs/claim" },
+              "affects": {
+                "type": "array",
+                "minItems": 1,
+                "uniqueItems": true,
+                "items": { "$ref": "#/$defs/dimension" }
+              }
+            }
+          }
+        }
+      },
+      "anyOf": [
+        {
+          "properties": {
+            "likely_gains": { "minItems": 1 }
+          }
+        },
+        {
+          "properties": {
+            "daily_costs": { "minItems": 1 }
+          }
+        }
+      ]
+    },
+    "uncertainEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "category",
+        "likelihood",
+        "fact_level",
+        "source",
+        "evidence_refs",
+        "safe_to_simulate",
+        "requires_user_consent"
+      ],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "category": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 300
+        },
+        "likelihood": { "enum": ["low", "medium", "high", "unknown"] },
+        "fact_level": { "$ref": "#/$defs/factLevel" },
+        "source": { "$ref": "#/$defs/sourceType" },
+        "evidence_refs": {
+          "type": "array",
+          "maxItems": 12,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/id" }
+        },
+        "safe_to_simulate": { "type": "boolean" },
+        "requires_user_consent": { "type": "boolean" }
+      }
+    },
+    "forbiddenAssumption": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "category", "statement", "evidence_refs"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "category": {
+          "enum": [
+            "outcome_guarantee",
+            "major_adversity",
+            "identity_stereotype",
+            "continuity_erasure",
+            "psychological_judgment",
+            "unsupported_specificity",
+            "other"
+          ]
+        },
+        "statement": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "evidence_refs": {
+          "type": "array",
+          "maxItems": 12,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/id" }
+        }
+      }
+    }
+  }
+}

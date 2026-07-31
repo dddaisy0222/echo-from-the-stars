@@ -1,0 +1,105 @@
+{
+  "schema_version": "oracle-calibration-output.v1",
+  "request_id": "oracle_calibrate_ningbo_001",
+  "world_id": "world_ningbo_mobile_001",
+  "journey_id": "journey_ningbo_01",
+  "seed_version": 3,
+  "pack_id": "pack_ningbo_mobile_001",
+  "mode": "calibrate",
+  "items": [
+    {
+      "calibration_id": "calibration_role_track",
+      "topic": "role_track",
+      "impact": "world_shaping",
+      "premise_type": "counterfactual_premise",
+      "why_it_matters": "具体部门会改变每天处理的任务、协作对象与成长路径，不能仅凭学历替你决定。",
+      "candidates": [
+        {
+          "candidate_id": "candidate_role_digital",
+          "label": "数字化相关岗位",
+          "premise": "这次模拟先采用进入数字化转型或信息化相关岗位的设定。",
+          "source": "model_hypothesis",
+          "evidence_refs": ["constraint_mobile_role_unknown"],
+          "affects": ["skill", "institutional", "time"]
+        },
+        {
+          "candidate_id": "candidate_role_enterprise",
+          "label": "政企客户相关岗位",
+          "premise": "这次模拟先采用进入政企客户服务或项目协作岗位的设定。",
+          "source": "model_hypothesis",
+          "evidence_refs": ["constraint_mobile_role_unknown"],
+          "affects": ["skill", "social_environment", "institutional"]
+        },
+        {
+          "candidate_id": "candidate_role_rotation",
+          "label": "先从基层轮岗开始",
+          "premise": "这次模拟先采用入职初期经历基层业务轮岗、具体归属稍后确定的设定。",
+          "source": "verified_reference",
+          "evidence_refs": ["ref_mobile_onboarding_2026"],
+          "affects": ["skill", "time", "geography", "institutional"]
+        }
+      ]
+    },
+    {
+      "calibration_id": "calibration_housing",
+      "topic": "housing",
+      "impact": "world_shaping",
+      "premise_type": "counterfactual_premise",
+      "why_it_matters": "住房来源会同时改变通勤、家庭距离、经济压力和私人空间。",
+      "candidates": [
+        {
+          "candidate_id": "candidate_housing_parents",
+          "label": "先住父母家",
+          "premise": "这次模拟采用回宁波后先住父母家的设定。",
+          "source": "model_hypothesis",
+          "evidence_refs": ["seed.family_in_ningbo"],
+          "affects": ["economic", "relational", "geography", "time"]
+        },
+        {
+          "candidate_id": "candidate_housing_yinzhou",
+          "label": "鄞州独立小居所",
+          "premise": "这次模拟采用家里支持在鄞州拥有一处独立小居所的设定。",
+          "source": "user_evidence",
+          "evidence_refs": ["turn_user_housing_likelihood"],
+          "affects": ["economic", "relational", "geography", "time", "agency"]
+        },
+        {
+          "candidate_id": "candidate_housing_rent",
+          "label": "单位附近租住",
+          "premise": "这次模拟采用在单位附近自行租住的设定。",
+          "source": "model_hypothesis",
+          "evidence_refs": [],
+          "affects": ["economic", "geography", "time", "agency"]
+        }
+      ]
+    }
+  ],
+  "next_turn": {
+    "calibration_id": "calibration_housing",
+    "question": "住处会很大地改变这条生活。为了进入这次可能世界，你更愿意先采用哪种设定？也可以按你熟悉的情况自己改。",
+    "why_now": "住房会同时决定通勤、家庭距离、经济压力和私人空间，比早餐或具体作息更先影响世界结构。",
+    "interaction_type": "choice_with_other",
+    "candidate_ids": [
+      "candidate_housing_parents",
+      "candidate_housing_yinzhou",
+      "candidate_housing_rent"
+    ],
+    "allow_unknown": true,
+    "allow_free_text": true
+  },
+  "deferred_unknowns": [
+    {
+      "topic": "commute_mode",
+      "handling": "ask_later_if_causally_relevant"
+    },
+    {
+      "topic": "work_schedule",
+      "handling": "research_before_use"
+    },
+    {
+      "topic": "texture_preference",
+      "handling": "use_neutral_language"
+    }
+  ],
+  "generated_at": "2026-07-31T10:10:00Z"
+}

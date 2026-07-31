@@ -1,0 +1,187 @@
+{
+  "schema_version": "oracle-transition.v1",
+  "request_id": "oracle_req_002",
+  "transition_id": "transition_002",
+  "world_id": "world_london_ai_001",
+  "journey_id": "journey_01",
+  "seed_version": 4,
+  "pack_id": "pack_london_ai_001",
+  "based_on_state_version": 1,
+  "mode": "advance",
+  "requested_node_id": "world_node_002",
+  "node": {
+    "node_id": "world_node_002",
+    "horizon": "month_3",
+    "title": "共同时间成为真实边界",
+    "situation": "进入独立承担任务的阶段后，固定共同时间开始与临时工作安排发生摩擦。这个选择没有消除关系的不确定性，但让时间分配从临时协调变成一项需要被团队和自己看见的边界。",
+    "ordinary_details": [
+      "日历里第一次有一段不是等工作结束后才决定的私人时间。",
+      "临时任务出现时，需要更早说明自己能在什么时候交付。"
+    ],
+    "render_cues": [
+      {
+        "cue_id": "cue_protected_calendar_block",
+        "kind": "interface",
+        "detail": "日历里出现一块固定的私人时间，旁边是仍在移动的交付安排。",
+        "causal_refs": [
+          "event_choice_001",
+          "choice_protect_shared_time",
+          "var_shared_time"
+        ],
+        "persistence": "callback_candidate"
+      },
+      {
+        "cue_id": "cue_earlier_delivery_message",
+        "kind": "routine",
+        "detail": "临时任务出现时，交付时间需要比过去更早被说明和协商。",
+        "causal_refs": [
+          "event_choice_001",
+          "choice_protect_shared_time",
+          "var_work_context"
+        ],
+        "persistence": "node_only"
+      }
+    ],
+    "continuity_refs": [
+      "world_node_001",
+      "var_shared_time",
+      "var_work_context",
+      "tension_shared_time",
+      "tension_scope"
+    ],
+    "active_tension_ids": [
+      "tension_scope",
+      "tension_shared_time"
+    ],
+    "state_change_op_ids": [
+      "op_update_shared_time",
+      "op_transform_relationship_tension",
+      "op_update_work_context"
+    ],
+    "choices": [
+      {
+        "choice_id": "choice_negotiate_delivery",
+        "strategy": "seek_clarity",
+        "label": "协商交付节奏",
+        "action": "把固定共同时间作为已知边界，主动提出一个仍能完成核心任务的交付安排。",
+        "commits_to": "提前沟通时间边界与核心交付。",
+        "preserves": "保留工作责任和已约定的共同时间。",
+        "exposes_to": "需要承担更直接地谈判优先级的不适。",
+        "does_not_guarantee": "不保证每次临时任务都能被调整。",
+        "reversibility": "moderate",
+        "feedback_horizon": "immediate"
+      },
+      {
+        "choice_id": "choice_trade_one_evening",
+        "strategy": "accept_short_term_cost",
+        "label": "只调整这一次",
+        "action": "这次临时调整共同时间，同时约定下一次不再默认让私人安排让位。",
+        "commits_to": "完成当前紧急任务并明确这是一次性调整。",
+        "preserves": "保留之后重新建立边界的机会。",
+        "exposes_to": "一次性例外可能被误解为持续可用。",
+        "does_not_guarantee": "不保证口头边界会自动被团队记住。",
+        "reversibility": "easy",
+        "feedback_horizon": "next_node"
+      },
+      {
+        "choice_id": "choice_decline_extra_scope",
+        "strategy": "reduce_scope",
+        "label": "缩回额外任务",
+        "action": "保留核心交付，但暂不接下职责之外的新任务。",
+        "commits_to": "把有限时间用于已经承担的核心工作。",
+        "preserves": "保留学习质量与私人时间。",
+        "exposes_to": "短期内会减少接触额外项目的机会。",
+        "does_not_guarantee": "不保证岗位边界会因此长期稳定。",
+        "reversibility": "moderate",
+        "feedback_horizon": "long_term"
+      }
+    ],
+    "uncertainties": [
+      "团队如何看待持续的时间边界仍需通过多次协作观察。",
+      "固定共同时间是否适合关系双方仍需要继续协商。"
+    ]
+  },
+  "operations": [
+    {
+      "op_id": "op_update_shared_time",
+      "target_type": "variable",
+      "operation": "update",
+      "target_id": "var_shared_time",
+      "target_label": "关系共同时间",
+      "before_state": "共同时间需要跨时区主动安排，目前尚未形成固定节奏。",
+      "after_state": "每周已预留一段固定的跨时区共同时间，临时变化需要主动协商。",
+      "dimensions": ["relational", "time", "geography", "agency"],
+      "causal_refs": [
+        "event_choice_001",
+        "choice_protect_shared_time",
+        "var_shared_time",
+        "constraint_relationship"
+      ]
+    },
+    {
+      "op_id": "op_transform_relationship_tension",
+      "target_type": "tension",
+      "operation": "transform",
+      "target_id": "tension_shared_time",
+      "target_label": "新生活与原有关系",
+      "before_state": "重要关系仍在，但工作与时差开始竞争同一段可用时间。",
+      "after_state": "共同时间已有边界，新的张力变成如何在临时工作要求出现时维持并协商这项边界。",
+      "dimensions": ["relational", "time", "institutional", "agency"],
+      "causal_refs": [
+        "event_choice_001",
+        "choice_protect_shared_time",
+        "tension_shared_time",
+        "constraint_early_stage"
+      ]
+    },
+    {
+      "op_id": "op_update_work_context",
+      "target_type": "variable",
+      "operation": "update",
+      "target_id": "var_work_context",
+      "target_label": "工作适应",
+      "before_state": "正在熟悉英语工作语境和早期团队的协作方式。",
+      "after_state": "开始独立承担任务，也需要把私人时间边界翻译成清晰的优先级与交付沟通。",
+      "dimensions": ["skill", "time", "institutional", "agency"],
+      "causal_refs": [
+        "event_choice_001",
+        "choice_protect_shared_time",
+        "var_work_context",
+        "node_month_3"
+      ]
+    }
+  ],
+  "causal_edges": [
+    {
+      "edge_id": "edge_choice_to_time_structure",
+      "cause_refs": [
+        "event_choice_001",
+        "choice_protect_shared_time",
+        "constraint_relationship",
+        "var_shared_time"
+      ],
+      "effect_op_ids": [
+        "op_update_shared_time",
+        "op_transform_relationship_tension"
+      ],
+      "mechanism": "用户把维护关系的意图转化为可执行的固定时间，因此改变了时间配置；它没有决定关系结果，只把张力从无固定节奏转化为如何维持边界。",
+      "strength": "grounded"
+    },
+    {
+      "edge_id": "edge_time_boundary_to_work_coordination",
+      "cause_refs": [
+        "event_choice_001",
+        "choice_protect_shared_time",
+        "var_work_context",
+        "node_month_3"
+      ],
+      "effect_op_ids": [
+        "op_update_work_context"
+      ],
+      "mechanism": "当私人时间成为明确边界，进入独立交付阶段后就需要更主动地沟通优先级与完成方式。",
+      "strength": "grounded"
+    }
+  ],
+  "instantiated_uncertain_event_ids": [],
+  "generated_at": "2026-07-31T09:45:00Z"
+}

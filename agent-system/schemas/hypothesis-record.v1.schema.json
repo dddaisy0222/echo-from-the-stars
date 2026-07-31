@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://echo.local/schemas/hypothesis-record.v1.schema.json",
+  "title": "Echo Personal Model Hypothesis Record v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "hypothesis_id",
+    "user_id",
+    "proposal_key",
+    "statement",
+    "scope",
+    "status",
+    "supporting_evidence_ids",
+    "counter_evidence_ids",
+    "context_keys",
+    "falsification_condition",
+    "user_feedback",
+    "created_at",
+    "updated_at"
+  ],
+  "properties": {
+    "hypothesis_id": { "$ref": "#/$defs/id" },
+    "user_id": { "$ref": "#/$defs/id" },
+    "proposal_key": {
+      "type": "string",
+      "pattern": "^[a-z0-9_.-]{3,160}$"
+    },
+    "statement": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500
+    },
+    "scope": {
+      "enum": [
+        "decision_pattern",
+        "attention_pattern",
+        "valued_continuity",
+        "recurring_tension",
+        "conversation_preference"
+      ]
+    },
+    "status": {
+      "enum": ["emerging", "supported", "contested", "retired"]
+    },
+    "supporting_evidence_ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "minItems": 2,
+      "maxItems": 40,
+      "items": { "$ref": "#/$defs/id" }
+    },
+    "counter_evidence_ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "maxItems": 40,
+      "items": { "$ref": "#/$defs/id" }
+    },
+    "context_keys": {
+      "type": "array",
+      "uniqueItems": true,
+      "minItems": 2,
+      "maxItems": 40,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      }
+    },
+    "falsification_condition": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500
+    },
+    "user_feedback": {
+      "enum": ["unreviewed", "affirmed", "rejected", "edited"]
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{1,159}$"
+    }
+  }
+}

@@ -1,0 +1,153 @@
+{
+  "schema_version": "echo-agent-input.v1",
+  "request_id": "echo_req_ningbo_001",
+  "reply_id": "echo_reply_ningbo_001",
+  "journey_id": "journey_ningbo_mobile_001",
+  "world_id": "world_ningbo_mobile_001",
+  "seed_version": 2,
+  "simulation_version": "sim_ningbo_v1",
+  "world_state_version": 4,
+  "generated_at": "2026-07-31T10:30:00.000Z",
+  "output_language": "zh-CN",
+  "user_turn": {
+    "turn_id": "turn_echo_user_006",
+    "text": "稳定，真的好吗？",
+    "intent_hint": "ask_present_view"
+  },
+  "conversation": {
+    "recent_turns": [
+      {
+        "turn_id": "turn_echo_user_004",
+        "role": "user",
+        "text": "你晚上现在还有自己的时间吗？"
+      },
+      {
+        "turn_id": "turn_echo_005",
+        "role": "echo",
+        "text": "大部分时候有。至少这两个月，我把周二和周四晚上留了下来，没有再顺手接单位外的额外项目。"
+      }
+    ],
+    "durable_context": [
+      {
+        "context_id": "ctx_echo_evening_boundary",
+        "content": "Echo 已明确说，最近两个月主动保留了周二、周四两个晚上。",
+        "source_turn_ids": ["turn_echo_005"]
+      }
+    ]
+  },
+  "current_self": {
+    "current_time": "进入当前岗位后的第六个月",
+    "current_context": "工作节奏开始熟悉，晚上时间边界已经形成，但如何使用留下来的时间仍未稳定。",
+    "active_variables": [
+      {
+        "id": "var_work_rhythm",
+        "summary": "多数工作日能够在相对稳定的时间结束工作；季度性任务会打断这个节奏。"
+      },
+      {
+        "id": "var_evening_boundary",
+        "summary": "最近两个月固定保留周二、周四晚上，不接额外项目。"
+      }
+    ],
+    "active_tensions": [
+      {
+        "id": "tension_free_time_use",
+        "summary": "留下来的晚上尚未形成稳定用途，有时休息，有时继续浏览外部机会。"
+      }
+    ],
+    "current_commitments": [
+      {
+        "id": "commit_evening_boundary",
+        "summary": "继续保护每周两个完整晚上，月底再判断是否调整。"
+      }
+    ]
+  },
+  "shared_origin": [
+    {
+      "memory_id": "mem_core_considered_ningbo",
+      "content": "岔路发生时，用户认真考虑过回宁波进入相对稳定的工作。",
+      "truth_status": "user_confirmed"
+    },
+    {
+      "memory_id": "mem_core_real_path_xhs",
+      "content": "岔路发生后，用户现实中选择留在杭州进入小红书工作。",
+      "truth_status": "user_confirmed"
+    },
+    {
+      "memory_id": "mem_core_family_ningbo",
+      "content": "用户的父母在宁波生活。",
+      "truth_status": "user_confirmed"
+    }
+  ],
+  "other_path_view": {
+    "known_at_fork": [
+      {
+        "fact_id": "fork_fact_xhs_path",
+        "content": "岔路发生时，另一个明确选项是留在杭州进入小红书工作。",
+        "evidence_refs": ["mem_core_real_path_xhs"]
+      }
+    ],
+    "user_disclosures": [],
+    "known_unknowns": [
+      {
+        "unknown_id": "unknown_xhs_actual_work",
+        "topic": "用户进入小红书后的实际岗位、工作节奏与成长反馈尚未在本次对话中披露。"
+      },
+      {
+        "unknown_id": "unknown_xhs_actual_costs",
+        "topic": "用户在现实路径中承担的竞争、时间与关系成本尚未知。"
+      }
+    ]
+  },
+  "parallel_memories": [
+    {
+      "memory_id": "mem_arc_protect_evenings",
+      "kind": "committed_choice",
+      "content": "Echo 选择暂不接额外项目，并固定保留每周两个晚上。",
+      "occurred_at": "进入当前岗位后的第四个月",
+      "acceptance_status": "accepted_world_state",
+      "source_refs": [
+        "world_node_004",
+        "choice_protect_evenings",
+        "commit_evening_boundary"
+      ]
+    },
+    {
+      "memory_id": "mem_arc_opened_external_role",
+      "kind": "ordinary_detail",
+      "content": "在一个被保留下来的晚上，Echo 打开过一条外部岗位信息，读完后没有立即投递。",
+      "occurred_at": "进入当前岗位后的第五个月",
+      "acceptance_status": "accepted_archive",
+      "source_refs": ["world_node_005", "var_evening_boundary"]
+    },
+    {
+      "memory_id": "mem_arc_evening_self_report",
+      "kind": "echo_self_report",
+      "content": "Echo 曾说：把晚上空出来以后，暂时还不知道想长期把这些时间放在哪里。",
+      "occurred_at": "本次对话前一轮",
+      "acceptance_status": "accepted_echo_continuity",
+      "source_refs": ["turn_echo_005", "ctx_echo_evening_boundary"]
+    }
+  ],
+  "allowed_evidence_ids": [
+    "var_work_rhythm",
+    "var_evening_boundary",
+    "tension_free_time_use",
+    "commit_evening_boundary",
+    "mem_core_considered_ningbo",
+    "mem_core_real_path_xhs",
+    "mem_core_family_ningbo",
+    "fork_fact_xhs_path",
+    "mem_arc_protect_evenings",
+    "mem_arc_opened_external_role",
+    "mem_arc_evening_self_report",
+    "ctx_echo_evening_boundary"
+  ],
+  "dialogue_policy": {
+    "allowed_register": "reflective_allowed",
+    "max_reply_chars": 260,
+    "max_memory_callbacks": 2,
+    "allow_follow_up_question": false,
+    "max_follow_up_questions": 0,
+    "reality_disclosure_required": false
+  }
+}

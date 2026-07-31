@@ -1,0 +1,233 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://echo.local/schemas/general-agent.output.schema.json",
+  "title": "Echo General Agent Output v1 (Archived)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "reply",
+    "intent",
+    "seed_patch",
+    "field_evidence",
+    "missing_fields",
+    "next_action",
+    "ready",
+    "memory_candidates",
+    "safety"
+  ],
+  "properties": {
+    "reply": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 280
+    },
+    "intent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "confidence"],
+      "properties": {
+        "type": {
+          "enum": [
+            "past_unchosen",
+            "current_fork",
+            "revisit_without_change",
+            "open_exploration"
+          ]
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "seed_patch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "fork_moment",
+        "unchosen_path",
+        "real_path",
+        "decision_mechanism",
+        "invariants",
+        "target_question"
+      ],
+      "properties": {
+        "fork_moment": {
+          "type": ["string", "null"],
+          "maxLength": 300
+        },
+        "unchosen_path": {
+          "type": ["string", "null"],
+          "maxLength": 500
+        },
+        "real_path": {
+          "type": ["string", "null"],
+          "maxLength": 500
+        },
+        "decision_mechanism": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["reasons", "fears", "hopes", "attachments"],
+              "properties": {
+                "reasons": {
+                  "$ref": "#/$defs/shortStringArray"
+                },
+                "fears": {
+                  "$ref": "#/$defs/shortStringArray"
+                },
+                "hopes": {
+                  "$ref": "#/$defs/shortStringArray"
+                },
+                "attachments": {
+                  "$ref": "#/$defs/shortStringArray"
+                }
+              }
+            }
+          ]
+        },
+        "invariants": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "array",
+              "maxItems": 8,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["content", "kind"],
+                "properties": {
+                  "content": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 300
+                  },
+                  "kind": {
+                    "enum": [
+                      "person",
+                      "relationship",
+                      "responsibility",
+                      "resource",
+                      "constraint",
+                      "value",
+                      "self"
+                    ]
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "target_question": {
+          "type": ["string", "null"],
+          "maxLength": 500
+        }
+      }
+    },
+    "field_evidence": {
+      "type": "array",
+      "maxItems": 12,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["field", "quote", "source_turn"],
+        "properties": {
+          "field": {
+            "enum": [
+              "fork_moment",
+              "unchosen_path",
+              "real_path",
+              "decision_mechanism",
+              "invariants",
+              "target_question"
+            ]
+          },
+          "quote": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "source_turn": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      }
+    },
+    "missing_fields": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "fork_moment",
+          "unchosen_path",
+          "real_path",
+          "decision_mechanism",
+          "invariants",
+          "target_question",
+          "user_confirmation"
+        ]
+      }
+    },
+    "next_action": {
+      "enum": ["ask", "confirm", "ready", "route", "safety_handoff"]
+    },
+    "ready": {
+      "type": "boolean"
+    },
+    "memory_candidates": {
+      "type": "array",
+      "maxItems": 8,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["type", "content", "sensitivity"],
+        "properties": {
+          "type": {
+            "const": "user_stated"
+          },
+          "content": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "sensitivity": {
+            "enum": ["normal", "sensitive"]
+          }
+        }
+      }
+    },
+    "safety": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["level", "reason"],
+      "properties": {
+        "level": {
+          "enum": ["normal", "sensitive", "urgent"]
+        },
+        "reason": {
+          "type": ["string", "null"],
+          "maxLength": 500
+        }
+      }
+    }
+  },
+  "$defs": {
+    "shortStringArray": {
+      "type": "array",
+      "maxItems": 8,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 300
+      }
+    }
+  }
+}

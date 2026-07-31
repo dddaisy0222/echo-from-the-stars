@@ -5,6 +5,15 @@ import {
   handleImageOptimization,
 } from "vinext/server/image-optimization";
 import handler from "vinext/server/app-router-entry";
+import {
+  ECHO_RUNTIME_VERSION,
+  buildEchoInput,
+  buildEchoInstructions,
+  parseJsonObject as parseEchoJsonObject,
+  repairEchoOutput,
+  sanitizeEchoChatPayload,
+  validateEchoOutput,
+} from "../lib/echo-runtime";
 
 interface Env {
   ASSETS: Fetcher;
@@ -30,10 +39,7 @@ interface ExecutionContext {
 
 type Profile = {
   name: string;
-  birthday: string;
   identity: string;
-  hometown: string;
-  mbti: string;
 };
 
 type JourneyMode = "rewrite" | "replay" | "decide";
@@ -48,15 +54,9 @@ type WorldRequest = {
 
 type EchoChatPayload = {
   message?: string;
-  previousResponseId?: string;
   characterId?: string;
-  worldContext?: {
-    sceneId?: string;
-    sceneDescription?: string;
-    nearbyObject?: string;
-    collectedItems?: string[];
-    previousChoices?: string[];
-  };
+  conversationHistory?: unknown[];
+  worldContext?: Record<string, unknown>;
 };
 
 const worker = {
@@ -75,7 +75,7 @@ const worker = {
     }
 
     if (url.pathname === "/api/chat" && request.method === "POST") {
-      return handleEchoChat(request, env);
+      return handleEchoChatV1(request, env);
     }
 
     if (url.pathname === "/_vinext/image") {
@@ -139,7 +139,7 @@ async function handleWorldGeneration(
 3. 生活密度：使用具体但不冒充真实发生过的生活细节。避免空泛的“成长、自由、治愈”。
 4. 人性复杂：每条路都有得到和失去；平行自我可以矛盾、犹豫，也会过普通日子。
 5. 返还现实：最终发现应帮助用户看清自己反复在意的东西，并给出一个很小的现实行动，不下结论。
-6. MBTI 仅为弱线索，若与用户叙述冲突，以叙述为准。
+6. 不使用人格测试替用户下结论；行为假设必须允许被后续选择修正。
 7. 全部使用自然、克制、有画面但不悬浮的中文。
 
 只输出一个合法 JSON 对象，不要 Markdown，不要解释。JSON 必须严格符合：
@@ -188,10 +188,7 @@ async function handleWorldGeneration(
   const input = `
 用户 Profile：
 - 称呼：${profile.name}
-- 出生日期：${profile.birthday}
 - 当前身份：${profile.identity}
-- 成长地点：${profile.hometown}
-- MBTI 弱线索：${profile.mbti || "未提供"}
 
 旅程类型：${mode}
 时间方向：${timeline}
@@ -230,7 +227,165 @@ async function handleWorldGeneration(
   }
 }
 
-async function handleEchoChat(request: Request, env: Env): Promise<Response> {
+async function handleEchoChatV1(request: Request, env: Env): Promise<Response> {
+  let payload: EchoChatPayload;
+  try {
+    payload = (await request.json()) as EchoChatPayload;
+  } catch {
+    return apiError("没有读懂这句话。", "invalid_request", 400);
+  }
+
+  const runtimeRequest = sanitizeEchoChatPayload(payload);
+  if (!runtimeRequest) {
+    return apiError("房间里的信息不完整。", "invalid_world_context", 400);
+  }
+
+  if (!hasModel(env)) {
+    const fallback = repairEchoOutput(
+      null,
+      runtimeRequest.message,
+      runtimeRequest.evidence,
+    );
+    return sseReply(fallback.reply.text, undefined, {
+      runtimeVersion: ECHO_RUNTIME_VERSION,
+      mode: "grounded_fallback",
+      gate: fallback.gate,
+    });
+  }
+
+  const instructions = buildEchoInstructions();
+  const input = buildEchoInput(runtimeRequest);
+
+  try {
+    const generated = await callModel(env, instructions, input);
+    const candidate = parseEchoJsonObject(generated.text);
+    const validation = validateEchoOutput(
+      candidate,
+      runtimeRequest.evidence,
+      runtimeRequest.message,
+    );
+    let repairReasons = validation?.gate.violations || ["invalid_model_output"];
+
+    if (validation?.gate.passed) {
+      const humanity = await reviewEchoHumanity(
+        env,
+        runtimeRequest.message,
+        input,
+        validation.reply.text,
+      );
+      if (humanity.passed) {
+        return sseReply(validation.reply.text, generated.responseId, {
+          runtimeVersion: ECHO_RUNTIME_VERSION,
+          mode: "model",
+          gate: validation.gate,
+          humanity,
+        });
+      }
+      repairReasons = humanity.violations.length
+        ? humanity.violations
+        : ["humanity_critic_rejected"];
+    }
+
+    const repairInput = `${input}
+
+上一版候选：
+${JSON.stringify(candidate)}
+
+上一版输出没有通过门禁。失败规则：
+${repairReasons.join("\n")}
+
+请只返回修复后的完整 JSON 对象。`;
+    const repaired = await callModel(env, instructions, repairInput);
+    const repairedCandidate = parseEchoJsonObject(repaired.text);
+    const repairedValidation = validateEchoOutput(
+      repairedCandidate,
+      runtimeRequest.evidence,
+      runtimeRequest.message,
+    );
+
+    if (repairedValidation?.gate.passed) {
+      const humanity = await reviewEchoHumanity(
+        env,
+        runtimeRequest.message,
+        input,
+        repairedValidation.reply.text,
+      );
+      if (humanity.passed) {
+        return sseReply(repairedValidation.reply.text, repaired.responseId, {
+          runtimeVersion: ECHO_RUNTIME_VERSION,
+          mode: "model_repaired",
+          gate: repairedValidation.gate,
+          humanity,
+        });
+      }
+    }
+
+    const fallback = repairEchoOutput(
+      null,
+      runtimeRequest.message,
+      runtimeRequest.evidence,
+    );
+    return sseReply(fallback.reply.text, repaired.responseId, {
+      runtimeVersion: ECHO_RUNTIME_VERSION,
+      mode: "grounded_fallback",
+      gate: fallback.gate,
+    });
+  } catch {
+    const fallback = repairEchoOutput(
+      null,
+      runtimeRequest.message,
+      runtimeRequest.evidence,
+    );
+    return sseReply(fallback.reply.text, undefined, {
+      runtimeVersion: ECHO_RUNTIME_VERSION,
+      mode: "grounded_fallback",
+      gate: fallback.gate,
+    });
+  }
+}
+
+async function reviewEchoHumanity(
+  env: Env,
+  userMessage: string,
+  groundedContext: string,
+  reply: string,
+): Promise<{ passed: boolean; violations: string[] }> {
+  const instructions = `你是独立的 Humanity Critic，不扮演 Echo，也不续写回答。
+
+检查候选回复是否像一个有自己生活、认知边界和不同意见的平行自我，而不是讨好型客服、心理咨询师、人生导师或文学独白。
+
+拒绝条件：
+1. 替用户宣布真实欲望、人格、恐惧或选择。
+2. 只复述、附和或劝导，没有直接回答。
+3. 为了“戳中”而使用过度确定、廉价煽情、密集比喻或刻意升华。
+4. 假装知道用户未披露的现实路径，或把可能世界冒充真实未来。
+5. 无关地塞入生活细节，或每轮都重复世界观声明。
+6. 语气像报告、客服、模板化治疗话术。
+
+只返回 JSON：{"passed":true,"violations":[]}。不通过时 violations 写 1–3 条短而可执行的中文修复要求。`;
+  const input = `用户此轮：${userMessage}
+
+已约束的世界上下文：
+${groundedContext}
+
+候选回复：
+${reply}`;
+  try {
+    const result = await callModel(env, instructions, input);
+    const parsed = parseEchoJsonObject(result.text);
+    if (!parsed || typeof parsed.passed !== "boolean") {
+      return { passed: false, violations: ["Humanity Critic 输出无效"] };
+    }
+    return {
+      passed: parsed.passed,
+      violations: sanitizeStringArray(parsed.violations, 3, 180),
+    };
+  } catch {
+    return { passed: false, violations: ["Humanity Critic 暂时不可用"] };
+  }
+}
+
+async function handleLegacyEchoChat(request: Request, env: Env): Promise<Response> {
   if (!hasModel(env)) return notConfigured();
 
   let payload: EchoChatPayload;
@@ -256,10 +411,10 @@ async function handleEchoChat(request: Request, env: Env): Promise<Response> {
 对话规则：
 1. 第一人称自然回答，每次 2–4 句，先回应真正的问题，再补一个这五年里的具体细节。
 2. 不以“我理解你”“你的感受很正常”等客服式句子开场。
-3. 不做 MBTI、玄学、心理诊断，不声称未来一定如此。
+3. 不做人格分类、玄学、心理诊断，不声称未来一定如此。
 4. 不只复述用户；必要时温和反驳她对另一条路的美化。
 5. 你可以说“我只是一种认真推演过的可能”。
-6. 不诱导用户逃离现实。用户问“怎么办”时，把她真正羡慕的部分缩小成今天可以做的一步。
+6. 不诱导用户逃离现实。用户问“怎么办”时，也不替用户推断欲望或规定行动。
 7. 说话像另一个真实的自己，不像一份产品报告。
 `;
 
@@ -269,6 +424,7 @@ async function handleEchoChat(request: Request, env: Env): Promise<Response> {
 - 附近的回声：${context.nearbyObject || "水面里另一个自己的倒影"}
 - 用户已经带走：${context.collectedItems.join("、") || "还没有完整证据"}
 - 用户先前的选择：${context.previousChoices.join("、") || "未记录"}
+- 旧版上下文（仅供兼容，不得当作用户事实）：${context.personalMemorySummary || "无"}
 
 现在的用户问：
 ${message}
@@ -443,17 +599,9 @@ function sanitizeProfile(value: unknown): Profile | null {
   if (!isObject(value)) return null;
   const profile = {
     name: limitedString(value.name, 40),
-    birthday: limitedString(value.birthday, 20),
     identity: limitedString(value.identity, 80),
-    hometown: limitedString(value.hometown, 80),
-    mbti: limitedString(value.mbti, 8),
   };
-  if (
-    !profile.name ||
-    !profile.birthday ||
-    !profile.identity ||
-    !profile.hometown
-  ) {
+  if (!profile.name || !profile.identity) {
     return null;
   }
   return profile;
@@ -468,6 +616,7 @@ function sanitizeWorldContext(value: unknown) {
     nearbyObject: limitedString(value.nearbyObject, 800),
     collectedItems: sanitizeStringArray(value.collectedItems, 20, 160),
     previousChoices: sanitizeStringArray(value.previousChoices, 20, 160),
+    personalMemorySummary: limitedString(value.personalMemorySummary, 1200),
   };
 }
 
@@ -516,7 +665,11 @@ function extractReplyText(data: Record<string, unknown>): string {
   return "";
 }
 
-function sseReply(text: string, responseId: string): Response {
+function sseReply(
+  text: string,
+  responseId?: string,
+  metadata?: Record<string, unknown>,
+): Response {
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
     start(controller) {
@@ -527,7 +680,10 @@ function sseReply(text: string, responseId: string): Response {
       );
       controller.enqueue(
         encoder.encode(
-          `event: completed\ndata: ${JSON.stringify({ responseId })}\n\n`,
+          `event: completed\ndata: ${JSON.stringify({
+            responseId,
+            ...metadata,
+          })}\n\n`,
         ),
       );
       controller.close();
@@ -561,6 +717,6 @@ function limitedString(value: unknown, maxLength: number): string {
   return result.length <= maxLength ? result : result.slice(0, maxLength);
 }
 
-function isObject(value: unknown): value is Record<string, any> {
+function isObject(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }

@@ -1,0 +1,238 @@
+{
+  "schema_version": "oracle-agent-input.v1",
+  "request_id": "oracle_req_001",
+  "transition_id": "transition_001",
+  "world_id": "world_london_ai_001",
+  "journey_id": "journey_01",
+  "seed_version": 4,
+  "pack_id": "pack_london_ai_001",
+  "based_on_state_version": 0,
+  "mode": "initialize",
+  "requested_node_id": "world_node_001",
+  "reality_pack": {
+    "schema_version": "reality-pack.v1",
+    "request_id": "hist_req_001",
+    "pack_id": "pack_london_ai_001",
+    "journey_id": "journey_01",
+    "seed_version": 4,
+    "changed_variable": "毕业时去伦敦加入一家早期 AI 创业公司，而不是留在杭州进入大厂",
+    "setting": {
+      "time_period": {
+        "value": "毕业后的职业起步阶段",
+        "fact_level": "confirmed",
+        "source": "user_confirmed",
+        "evidence_refs": ["seed.fork_moment"],
+        "time_sensitive": false,
+        "as_of": null
+      },
+      "place": {
+        "value": "英国伦敦",
+        "fact_level": "confirmed",
+        "source": "user_confirmed",
+        "evidence_refs": ["seed.unchosen_path"],
+        "time_sensitive": false,
+        "as_of": null
+      },
+      "domain": {
+        "value": "早期 AI 创业公司",
+        "fact_level": "confirmed",
+        "source": "user_confirmed",
+        "evidence_refs": ["seed.unchosen_path"],
+        "time_sensitive": false,
+        "as_of": null
+      },
+      "role": null
+    },
+    "constraints": [
+      {
+        "id": "constraint_english",
+        "claim": {
+          "value": "主要使用英语工作会让职业起步同时包含专业任务与语言、语境适应。",
+          "fact_level": "confirmed",
+          "source": "seed_constraint",
+          "evidence_refs": ["seed.constraint.english"],
+          "time_sensitive": false,
+          "as_of": null
+        },
+        "applies_to": ["skill", "social_environment", "time"],
+        "mutable": false
+      },
+      {
+        "id": "constraint_relationship",
+        "claim": {
+          "value": "国内的重要关系仍然存在，跨时区维护需要持续安排共同时间。",
+          "fact_level": "confirmed",
+          "source": "seed_constraint",
+          "evidence_refs": ["seed.continuity.relationship"],
+          "time_sensitive": false,
+          "as_of": null
+        },
+        "applies_to": ["relational", "time", "geography"],
+        "mutable": false
+      },
+      {
+        "id": "constraint_early_stage",
+        "claim": {
+          "value": "早期团队的岗位边界通常比成熟组织更易变化，个人需要在有限信息下协调优先级。",
+          "fact_level": "probable",
+          "source": "domain_general_knowledge",
+          "evidence_refs": [],
+          "time_sensitive": false,
+          "as_of": null
+        },
+        "applies_to": ["institutional", "skill", "time"],
+        "mutable": true
+      }
+    ],
+    "trajectory_nodes": [
+      {
+        "id": "node_month_1",
+        "horizon": "month_1",
+        "summary": {
+          "value": "这一阶段通常以落地安顿、理解团队语境和建立最初工作节奏为主。",
+          "fact_level": "probable",
+          "source": "domain_general_knowledge",
+          "evidence_refs": [],
+          "time_sensitive": false,
+          "as_of": null
+        },
+        "likely_gains": [
+          {
+            "value": "更快接触跨文化协作与早期产品决策。",
+            "fact_level": "possible",
+            "source": "model_inference",
+            "evidence_refs": [],
+            "time_sensitive": false,
+            "as_of": null
+          }
+        ],
+        "daily_costs": [
+          {
+            "value": "安顿新生活、使用英语工作和理解隐性协作规则会同时占用注意力。",
+            "fact_level": "probable",
+            "source": "domain_general_knowledge",
+            "evidence_refs": [],
+            "time_sensitive": false,
+            "as_of": null
+          }
+        ],
+        "typical_conditions": [],
+        "branch_hints": []
+      },
+      {
+        "id": "node_month_3",
+        "horizon": "month_3",
+        "summary": {
+          "value": "这一阶段通常开始从观察团队转向独立承担可交付任务。",
+          "fact_level": "probable",
+          "source": "domain_general_knowledge",
+          "evidence_refs": [],
+          "time_sensitive": false,
+          "as_of": null
+        },
+        "likely_gains": [
+          {
+            "value": "可能更早看见个人工作与产品结果之间的连接。",
+            "fact_level": "possible",
+            "source": "model_inference",
+            "evidence_refs": [],
+            "time_sensitive": false,
+            "as_of": null
+          }
+        ],
+        "daily_costs": [
+          {
+            "value": "跨时区关系需要主动安排，而不能依赖原先自然重叠的生活时间。",
+            "fact_level": "confirmed",
+            "source": "seed_constraint",
+            "evidence_refs": ["seed.continuity.relationship"],
+            "time_sensitive": false,
+            "as_of": null
+          }
+        ],
+        "typical_conditions": [],
+        "branch_hints": []
+      }
+    ],
+    "common_uncertain_events": [
+      {
+        "id": "event_priority_shift",
+        "category": "团队方向与优先级阶段性调整",
+        "likelihood": "medium",
+        "fact_level": "probable",
+        "source": "domain_general_knowledge",
+        "evidence_refs": [],
+        "safe_to_simulate": true,
+        "requires_user_consent": false
+      }
+    ],
+    "forbidden_assumptions": [
+      {
+        "id": "forbid_outcome",
+        "category": "outcome_guarantee",
+        "statement": "不得默认创业公司必然成功或失败。",
+        "evidence_refs": []
+      },
+      {
+        "id": "forbid_adversity",
+        "category": "major_adversity",
+        "statement": "不得为了剧情擅自加入疾病、事故、裁员或关系破裂。",
+        "evidence_refs": []
+      },
+      {
+        "id": "forbid_stereotype",
+        "category": "identity_stereotype",
+        "statement": "不得用创业公司或海外工作的刻板印象代替具体条件。",
+        "evidence_refs": []
+      },
+      {
+        "id": "forbid_erasure",
+        "category": "continuity_erasure",
+        "statement": "不得让当时的重要关系无故消失，也不得保证其结果不变。",
+        "evidence_refs": ["seed.continuity.relationship"]
+      }
+    ],
+    "open_questions": [
+      {
+        "field": "setting.role",
+        "question": "当时邀请你的具体岗位或主要工作方向是什么？",
+        "why_needed": "岗位会改变日常任务与成长路径，但不妨碍先建立基础世界。",
+        "blocking": false
+      }
+    ],
+    "generated_at": "2026-07-31T09:20:00Z"
+  },
+  "calibration_snapshot": {
+    "status": "ready",
+    "premises": [],
+    "unresolved_topics": ["role_track", "housing", "commute_mode"]
+  },
+  "current_world_state": null,
+  "trigger": {
+    "type": "world_initialized"
+  },
+  "allowed_next_horizons": ["month_1"],
+  "available_choice_ids": [
+    "choice_define_scope",
+    "choice_protect_shared_time",
+    "choice_observe_first"
+  ],
+  "retrieval_bundle": {
+    "bundle_id": "bundle_oracle_001",
+    "consumer": "oracle",
+    "task": "initialize_world",
+    "world_id": "world_london_ai_001",
+    "records": [
+      {
+        "record_id": "core_seed_continuity_relationship",
+        "layer": "core",
+        "content": "用户明确不希望当时的重要关系被世界直接写没。"
+      }
+    ],
+    "hypothesis_hints": [],
+    "expires_at": "2026-07-31T10:00:00Z"
+  },
+  "consented_uncertain_event_ids": [],
+  "output_language": "zh-CN",
+  "generated_at": "2026-07-31T09:30:00Z"
+}

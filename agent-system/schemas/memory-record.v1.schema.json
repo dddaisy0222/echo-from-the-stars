@@ -1,0 +1,250 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://echo.local/schemas/memory-record.v1.schema.json",
+  "title": "Echo Memory Record v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "memory_id",
+    "user_id",
+    "layer",
+    "truth_status",
+    "kind",
+    "content",
+    "provenance",
+    "temporal",
+    "sensitivity",
+    "retention",
+    "consent_scope",
+    "status",
+    "supersedes",
+    "superseded_by",
+    "canonical_group_id",
+    "tags"
+  ],
+  "properties": {
+    "memory_id": { "$ref": "#/$defs/id" },
+    "user_id": { "$ref": "#/$defs/id" },
+    "layer": {
+      "enum": ["core", "observed", "archive"]
+    },
+    "truth_status": {
+      "enum": [
+        "user_stated",
+        "user_confirmed",
+        "observed_interaction",
+        "simulated"
+      ]
+    },
+    "kind": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_.-]{1,79}$"
+    },
+    "content": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["verbatim", "normalized"],
+      "properties": {
+        "verbatim": {
+          "type": ["string", "null"],
+          "maxLength": 2000
+        },
+        "normalized": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_type",
+        "source_id",
+        "turn_ids",
+        "event_ids",
+        "journey_id",
+        "world_id",
+        "simulation_version",
+        "created_by",
+        "context_key"
+      ],
+      "properties": {
+        "source_type": {
+          "enum": [
+            "base_profile",
+            "general_agent_candidate",
+            "user_confirmation",
+            "signed_product_event",
+            "world_generator",
+            "oracle",
+            "echo_dialogue",
+            "user_return_note",
+            "user_correction"
+          ]
+        },
+        "source_id": { "$ref": "#/$defs/id" },
+        "turn_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "maxItems": 20,
+          "items": { "$ref": "#/$defs/id" }
+        },
+        "event_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "maxItems": 20,
+          "items": { "$ref": "#/$defs/id" }
+        },
+        "journey_id": {
+          "oneOf": [{ "$ref": "#/$defs/id" }, { "type": "null" }]
+        },
+        "world_id": {
+          "oneOf": [{ "$ref": "#/$defs/id" }, { "type": "null" }]
+        },
+        "simulation_version": {
+          "type": ["integer", "null"],
+          "minimum": 1
+        },
+        "created_by": {
+          "enum": ["user", "product", "system_model"]
+        },
+        "context_key": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        }
+      }
+    },
+    "temporal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "event_time",
+        "valid_from",
+        "valid_to",
+        "recorded_at"
+      ],
+      "properties": {
+        "event_time": { "type": ["string", "null"], "maxLength": 100 },
+        "valid_from": { "type": ["string", "null"], "format": "date-time" },
+        "valid_to": { "type": ["string", "null"], "format": "date-time" },
+        "recorded_at": { "type": "string", "format": "date-time" }
+      }
+    },
+    "sensitivity": {
+      "enum": ["normal", "sensitive", "restricted"]
+    },
+    "retention": {
+      "enum": ["session", "journey", "persistent"]
+    },
+    "consent_scope": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "general",
+          "history",
+          "oracle",
+          "echo",
+          "reflection",
+          "user_view"
+        ]
+      }
+    },
+    "status": {
+      "enum": [
+        "active",
+        "disputed",
+        "superseded",
+        "rejected",
+        "deleted"
+      ]
+    },
+    "supersedes": {
+      "type": "array",
+      "uniqueItems": true,
+      "maxItems": 20,
+      "items": { "$ref": "#/$defs/id" }
+    },
+    "superseded_by": {
+      "oneOf": [{ "$ref": "#/$defs/id" }, { "type": "null" }]
+    },
+    "canonical_group_id": {
+      "oneOf": [{ "$ref": "#/$defs/id" }, { "type": "null" }]
+    },
+    "tags": {
+      "type": "array",
+      "uniqueItems": true,
+      "maxItems": 20,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9_.-]{1,80}$"
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "truth_status": { "const": "simulated" } },
+        "required": ["truth_status"]
+      },
+      "then": {
+        "properties": {
+          "layer": { "const": "archive" },
+          "provenance": {
+            "properties": {
+              "world_id": { "$ref": "#/$defs/id" },
+              "simulation_version": { "type": "integer", "minimum": 1 }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "truth_status": { "const": "observed_interaction" }
+        },
+        "required": ["truth_status"]
+      },
+      "then": {
+        "properties": {
+          "layer": { "const": "observed" },
+          "provenance": {
+            "properties": {
+              "source_type": { "const": "signed_product_event" },
+              "event_ids": { "minItems": 1 }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "layer": { "const": "core" } },
+        "required": ["layer"]
+      },
+      "then": {
+        "properties": {
+          "truth_status": {
+            "enum": ["user_stated", "user_confirmed"]
+          },
+          "provenance": {
+            "properties": {
+              "created_by": { "const": "user" },
+              "turn_ids": { "minItems": 1 }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{1,159}$"
+    }
+  }
+}

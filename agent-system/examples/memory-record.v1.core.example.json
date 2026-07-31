@@ -1,0 +1,43 @@
+{
+  "memory_id": "mem_core_real_path_001",
+  "user_id": "user_001",
+  "layer": "core",
+  "truth_status": "user_confirmed",
+  "kind": "real_path",
+  "content": {
+    "verbatim": "我最后留在杭州进了大厂",
+    "normalized": "留在杭州进入大厂"
+  },
+  "provenance": {
+    "source_type": "general_agent_candidate",
+    "source_id": "journey_01.real_path",
+    "turn_ids": ["turn_04", "turn_10"],
+    "event_ids": [],
+    "journey_id": "journey_01",
+    "world_id": null,
+    "simulation_version": null,
+    "created_by": "user",
+    "context_key": "journey:journey_01:onboarding"
+  },
+  "temporal": {
+    "event_time": "毕业求职阶段",
+    "valid_from": null,
+    "valid_to": null,
+    "recorded_at": "2026-07-31T08:00:00.000Z"
+  },
+  "sensitivity": "normal",
+  "retention": "persistent",
+  "consent_scope": [
+    "general",
+    "history",
+    "oracle",
+    "echo",
+    "reflection",
+    "user_view"
+  ],
+  "status": "active",
+  "supersedes": [],
+  "superseded_by": null,
+  "canonical_group_id": null,
+  "tags": ["career", "location", "journey_01"]
+}

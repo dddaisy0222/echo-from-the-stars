@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://echo.local/schemas/humanity-critic.v1.output.schema.json",
+  "title": "Echo Humanity Critic Output v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "review_id",
+    "content_type",
+    "subject_id",
+    "pass",
+    "failed_rules",
+    "strengths",
+    "revision_hint",
+    "generated_at"
+  ],
+  "properties": {
+    "schema_version": { "const": "humanity-critic-output.v1" },
+    "review_id": { "$ref": "#/$defs/id" },
+    "content_type": {
+      "enum": [
+        "oracle_transition",
+        "post_commit_feedback",
+        "character_line",
+        "echo_reply"
+      ]
+    },
+    "subject_id": { "$ref": "#/$defs/id" },
+    "pass": { "type": "boolean" },
+    "failed_rules": {
+      "type": "array",
+      "maxItems": 16,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["rule", "evidence", "severity"],
+        "properties": {
+          "rule": {
+            "enum": [
+              "grounded_specificity",
+              "choice_distinctness",
+              "natural_tradeoffs",
+              "no_reward_or_punishment_world",
+              "no_confirmation_loop",
+              "continuity_without_destiny",
+              "ordinary_human_texture",
+              "no_ai_voice_or_moralizing",
+              "agent_boundary",
+              "unearned_inner_state",
+              "sycophancy",
+              "performative_depth",
+              "conversational_naturalness",
+              "reality_honesty",
+              "structural_friction",
+              "bidirectional_counterfactual_boundary"
+            ]
+          },
+          "evidence": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "severity": { "enum": ["error", "warning"] }
+        }
+      }
+    },
+    "strengths": {
+      "type": "array",
+      "maxItems": 4,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 300
+      }
+    },
+    "revision_hint": {
+      "type": ["string", "null"],
+      "maxLength": 600
+    },
+    "generated_at": { "type": "string", "format": "date-time" }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "pass": { "const": true } },
+        "required": ["pass"]
+      },
+      "then": {
+        "properties": {
+          "failed_rules": { "maxItems": 0 },
+          "revision_hint": { "type": "null" }
+        }
+      },
+      "else": {
+        "properties": {
+          "failed_rules": { "minItems": 1 },
+          "revision_hint": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 600
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_.:-]{1,160}$"
+    }
+  }
+}

@@ -1,0 +1,86 @@
+{
+  "schema_version": "world-state.v1",
+  "world_id": "world_london_ai_001",
+  "journey_id": "journey_01",
+  "seed_version": 4,
+  "pack_id": "pack_london_ai_001",
+  "state_version": 1,
+  "simulation_label": "counterfactual_simulation",
+  "current_horizon": "month_1",
+  "variables": [
+    {
+      "variable_id": "var_work_context",
+      "label": "工作适应",
+      "state": "正在熟悉英语工作语境和早期团队的协作方式。",
+      "dimensions": ["skill", "social_environment", "institutional"],
+      "status": "active",
+      "provenance_refs": [
+        "constraint_english",
+        "constraint_early_stage",
+        "node_month_1",
+        "op_create_work_context"
+      ],
+      "updated_transition_id": "transition_001"
+    },
+    {
+      "variable_id": "var_shared_time",
+      "label": "关系共同时间",
+      "state": "共同时间需要跨时区主动安排，目前尚未形成固定节奏。",
+      "dimensions": ["relational", "time", "geography"],
+      "status": "active",
+      "provenance_refs": [
+        "constraint_relationship",
+        "core_seed_continuity_relationship",
+        "op_create_shared_time"
+      ],
+      "updated_transition_id": "transition_001"
+    }
+  ],
+  "tensions": [
+    {
+      "tension_id": "tension_scope",
+      "label": "职责边界与学习速度",
+      "state": "需要一边理解岗位期待，一边避免在信息不足时接下过多任务。",
+      "dimensions": ["skill", "time", "institutional", "agency"],
+      "status": "active",
+      "provenance_refs": [
+        "constraint_early_stage",
+        "node_month_1",
+        "op_create_scope_tension"
+      ],
+      "updated_transition_id": "transition_001"
+    },
+    {
+      "tension_id": "tension_shared_time",
+      "label": "新生活与原有关系",
+      "state": "重要关系仍在，但工作与时差开始竞争同一段可用时间。",
+      "dimensions": ["relational", "time", "geography"],
+      "status": "active",
+      "provenance_refs": [
+        "constraint_relationship",
+        "core_seed_continuity_relationship",
+        "op_create_relationship_tension"
+      ],
+      "updated_transition_id": "transition_001"
+    }
+  ],
+  "experienced_nodes": [
+    {
+      "node_id": "world_node_001",
+      "transition_id": "transition_001",
+      "horizon": "month_1",
+      "summary": "最初一个月开始建立工作适应、共同时间与两项仍未解决的生活张力。",
+      "committed_choice_event_id": null
+    }
+  ],
+  "pending_choice": {
+    "node_id": "world_node_001",
+    "choice_ids": [
+      "choice_define_scope",
+      "choice_protect_shared_time",
+      "choice_observe_first"
+    ]
+  },
+  "last_transition_id": "transition_001",
+  "updated_at": "2026-07-31T09:30:00Z"
+}

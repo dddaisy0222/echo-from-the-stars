@@ -1,0 +1,220 @@
+{
+  "schema_version": "oracle-agent-input.v1",
+  "request_id": "oracle_calibrate_ningbo_001",
+  "world_id": "world_ningbo_mobile_001",
+  "journey_id": "journey_ningbo_01",
+  "seed_version": 3,
+  "pack_id": "pack_ningbo_mobile_001",
+  "based_on_state_version": 0,
+  "mode": "calibrate",
+  "reality_pack": {
+    "schema_version": "reality-pack.v1",
+    "request_id": "hist_ningbo_req_001",
+    "pack_id": "pack_ningbo_mobile_001",
+    "journey_id": "journey_ningbo_01",
+    "seed_version": 3,
+    "changed_variable": "毕业后回宁波进入中国移动，而不是留在杭州工作",
+    "setting": {
+      "time_period": {
+        "value": "毕业后的职业起步阶段",
+        "fact_level": "confirmed",
+        "source": "user_confirmed",
+        "evidence_refs": ["seed.fork_moment"],
+        "time_sensitive": false,
+        "as_of": null
+      },
+      "place": {
+        "value": "浙江宁波",
+        "fact_level": "confirmed",
+        "source": "user_confirmed",
+        "evidence_refs": ["seed.unchosen_path"],
+        "time_sensitive": false,
+        "as_of": null
+      },
+      "domain": {
+        "value": "通信运营商",
+        "fact_level": "confirmed",
+        "source": "user_confirmed",
+        "evidence_refs": ["seed.unchosen_path"],
+        "time_sensitive": false,
+        "as_of": null
+      },
+      "role": null
+    },
+    "constraints": [
+      {
+        "id": "constraint_mobile_role_unknown",
+        "claim": {
+          "value": "具体部门与岗位方向尚未确定，不能仅凭学历推定。",
+          "fact_level": "confirmed",
+          "source": "seed_constraint",
+          "evidence_refs": ["seed.role_unknown"],
+          "time_sensitive": false,
+          "as_of": null
+        },
+        "applies_to": ["skill", "institutional", "time"],
+        "mutable": true
+      },
+      {
+        "id": "constraint_family_ningbo",
+        "claim": {
+          "value": "父母在宁波生活，回宁波会显著缩短家庭距离。",
+          "fact_level": "confirmed",
+          "source": "seed_constraint",
+          "evidence_refs": ["seed.family_in_ningbo"],
+          "time_sensitive": false,
+          "as_of": null
+        },
+        "applies_to": ["relational", "geography", "time"],
+        "mutable": false
+      }
+    ],
+    "trajectory_nodes": [
+      {
+        "id": "node_mobile_month_1",
+        "horizon": "month_1",
+        "summary": {
+          "value": "部分校招安排可能包含基层业务轮岗；具体形式取决于入职年份与岗位。",
+          "fact_level": "probable",
+          "source": "verified_reference",
+          "evidence_refs": ["ref_mobile_onboarding_2026"],
+          "time_sensitive": true,
+          "as_of": "2026-07"
+        },
+        "likely_gains": [
+          {
+            "value": "基层业务轮岗可能帮助新人建立对本地通信业务和组织运作的具体理解。",
+            "fact_level": "possible",
+            "source": "model_inference",
+            "evidence_refs": ["ref_mobile_onboarding_2026"],
+            "time_sensitive": false,
+            "as_of": null
+          }
+        ],
+        "daily_costs": [
+          {
+            "value": "若实际安排基层业务轮岗，初期需要把注意力放在流程、系统和协作规则的学习上。",
+            "fact_level": "probable",
+            "source": "verified_reference",
+            "evidence_refs": ["ref_mobile_onboarding_2026"],
+            "time_sensitive": true,
+            "as_of": "2026-07"
+          }
+        ],
+        "typical_conditions": [],
+        "branch_hints": []
+      },
+      {
+        "id": "node_mobile_month_3",
+        "horizon": "month_3",
+        "summary": {
+          "value": "岗位方向和实际工作节奏会在参与具体业务后逐渐清晰。",
+          "fact_level": "probable",
+          "source": "domain_general_knowledge",
+          "evidence_refs": [],
+          "time_sensitive": false,
+          "as_of": null
+        },
+        "likely_gains": [],
+        "daily_costs": [
+          {
+            "value": "不同岗位方向对成长、时间和关系的交换不同。",
+            "fact_level": "possible",
+            "source": "model_inference",
+            "evidence_refs": [],
+            "time_sensitive": false,
+            "as_of": null
+          }
+        ],
+        "typical_conditions": [],
+        "branch_hints": []
+      }
+    ],
+    "common_uncertain_events": [],
+    "forbidden_assumptions": [
+      {
+        "id": "forbid_mobile_outcome",
+        "category": "outcome_guarantee",
+        "statement": "不得默认进入移动后必然安稳、停滞、成功或后悔。",
+        "evidence_refs": []
+      },
+      {
+        "id": "forbid_mobile_adversity",
+        "category": "major_adversity",
+        "statement": "不得为了剧情擅自加入疾病、事故、失业或关系破裂。",
+        "evidence_refs": []
+      },
+      {
+        "id": "forbid_mobile_stereotype",
+        "category": "identity_stereotype",
+        "statement": "不得把运营商工作写成必然清闲、僵化或没有成长。",
+        "evidence_refs": []
+      },
+      {
+        "id": "forbid_mobile_specificity",
+        "category": "unsupported_specificity",
+        "statement": "不得无依据确定部门、作息、工资、食堂价格、住房或通勤方式。",
+        "evidence_refs": []
+      }
+    ],
+    "open_questions": [
+      {
+        "field": "setting.role",
+        "question": "这次世界从哪类岗位或轮岗阶段开始？",
+        "why_needed": "它会改变日常任务与成长路径。",
+        "blocking": false
+      }
+    ],
+    "generated_at": "2026-07-31T10:00:00Z"
+  },
+  "calibration_snapshot": {
+    "status": "not_started",
+    "premises": [],
+    "unresolved_topics": [
+      "role_track",
+      "housing",
+      "commute_mode",
+      "work_schedule"
+    ]
+  },
+  "current_world_state": null,
+  "trigger": {
+    "type": "world_calibration_requested"
+  },
+  "available_calibration_ids": [
+    "calibration_role_track",
+    "calibration_housing",
+    "calibration_commute",
+    "calibration_work_schedule"
+  ],
+  "available_candidate_ids": [
+    "candidate_role_digital",
+    "candidate_role_enterprise",
+    "candidate_role_rotation",
+    "candidate_housing_parents",
+    "candidate_housing_yinzhou",
+    "candidate_housing_rent"
+  ],
+  "retrieval_bundle": {
+    "bundle_id": "bundle_oracle_calibrate_ningbo_001",
+    "consumer": "oracle",
+    "task": "calibrate_world",
+    "world_id": "world_ningbo_mobile_001",
+    "records": [
+      {
+        "record_id": "seed.family_in_ningbo",
+        "layer": "core",
+        "content": "用户父母在宁波生活。"
+      },
+      {
+        "record_id": "turn_user_housing_likelihood",
+        "layer": "core",
+        "content": "用户认为如果回宁波工作，父母很可能支持在鄞州拥有一套小居所。"
+      }
+    ],
+    "hypothesis_hints": [],
+    "expires_at": "2026-07-31T11:00:00Z"
+  },
+  "output_language": "zh-CN",
+  "generated_at": "2026-07-31T10:10:00Z"
+}

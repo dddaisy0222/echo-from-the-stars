@@ -1,0 +1,36 @@
+{
+  "memory_id": "mem_archive_world_event_001",
+  "user_id": "user_001",
+  "layer": "archive",
+  "truth_status": "simulated",
+  "kind": "parallel_self_event",
+  "content": {
+    "verbatim": null,
+    "normalized": "平行自我在伦敦入职第六周第一次独立负责客户材料。"
+  },
+  "provenance": {
+    "source_type": "oracle",
+    "source_id": "oracle_node_02",
+    "turn_ids": [],
+    "event_ids": ["world_event_02"],
+    "journey_id": "journey_01",
+    "world_id": "world_01",
+    "simulation_version": 3,
+    "created_by": "system_model",
+    "context_key": "world:world_01:node:node_02"
+  },
+  "temporal": {
+    "event_time": "入职第六周",
+    "valid_from": null,
+    "valid_to": null,
+    "recorded_at": "2026-07-31T08:03:00.000Z"
+  },
+  "sensitivity": "normal",
+  "retention": "journey",
+  "consent_scope": ["oracle", "echo", "reflection", "user_view"],
+  "status": "active",
+  "supersedes": [],
+  "superseded_by": null,
+  "canonical_group_id": null,
+  "tags": ["world_01", "career", "simulated"]
+}

@@ -1,3 +1,9 @@
+import { rememberParallelDialogue } from '../../../lib/echo-memory.ts'
+import {
+  repairEchoOutput,
+  sanitizeEchoChatPayload,
+} from '../../../../lib/echo-runtime.ts'
+
 const RESPONSE_IDS_KEY = 'echo.chat.responseIds'
 const MESSAGE_KEY_PREFIX = 'echo.chat.messages.'
 const MAX_MESSAGE_LENGTH = 1000
@@ -169,6 +175,14 @@ export class WorldChatPanel {
     this.textarea.value = ''
     this.countElement.textContent = `0 / ${MAX_MESSAGE_LENGTH}`
     this.isPinnedToBottom = true
+    const conversationHistory = this.messages
+      .filter(
+        (message) =>
+          ['user', 'assistant'].includes(message.role) &&
+          message.status === 'complete' &&
+          message.content,
+      )
+      .slice(-20)
 
     const assistantMessage = {
       id: createId('assistant'),
@@ -208,6 +222,7 @@ export class WorldChatPanel {
           previousResponseId: this.previousResponseId || undefined,
           characterId: this.activeCharacterId,
           worldContext: this.worldContext,
+          conversationHistory,
         }),
         signal: controller.signal,
       })
@@ -298,6 +313,9 @@ export class WorldChatPanel {
       }
       if (assistantMessage.status === 'streaming') {
         assistantMessage.status = completed ? 'complete' : 'error'
+      }
+      if (completed && assistantMessage.content) {
+        rememberParallelDialogue(content, assistantMessage.content)
       }
       this.persistMessages()
       this.render()
@@ -527,27 +545,20 @@ function userFacingError(error) {
 }
 
 function createSnapshotReply(message, worldContext) {
-  const text = message.toLowerCase()
-  const cost = String(worldContext?.sceneDescription || '')
-    .split('这条人生的代价是：')[1]
-    ?.replace(/[。.]$/, '')
-  const truth = String(worldContext?.nearbyObject || '')
-    .split('始终没变的是：')[1]
-    ?.replace(/[。.]$/, '')
-
-  if (/后悔|选错|值得|更好|快乐/.test(text)) {
-    return `我不是你错过的正确答案。我只是替你证明，那条路也有得到，也有代价${cost ? `——${cost}` : ''}。你真正要选的，从来不是哪一条人生没有遗憾，而是哪一种代价你愿意承担。`
+  const request = sanitizeEchoChatPayload({
+    message,
+    characterId: 'parallel-self',
+    worldContext,
+    conversationHistory: [],
+  })
+  if (!request) {
+    return '这件事我现在没有足够的经历能说准。我不想为了给你一个完整答案，补出没有发生过的生活。'
   }
-  if (/代价|失去|错过|牺牲/.test(text)) {
-    return `你总把我的自由看得很亮，却很少看见它背后的交换${cost ? `：${cost}` : '。我也错过了你现在拥有的一些普通日子'}。可这不说明你应该庆幸留下，只说明我们都不是完整答案。`
-  }
-  if (/你是谁|真实吗|平行|另一个/.test(text)) {
-    return `我是那次选择继续生活之后，可能长成的你。不是预言，也不是幻觉，是一组被认真推演过的后果。你来看我，不是为了住进我的生活，而是为了看清自己反复想要的东西。`
-  }
-  if (/现在|回去|怎么办|接下来|行动/.test(text)) {
-    return `回去以后，不用复制我的人生。只从你羡慕我的部分里拿走一个最小动作：发出那封信、去一次陌生的地方，或者把真正舍不得的东西说清楚。这样你就不是被困在当下，而是在扩张它。`
-  }
-  return `我听见了。换了城市、工作和关系之后，有一件事仍然反复出现${truth ? `：${truth}` : '：我们还是想被理解，也还是害怕辜负重要的人'}。所以也许你怀念的不是我的人生，而是那个敢于选择的自己。`
+  return repairEchoOutput(
+    null,
+    request.message,
+    request.evidence,
+  ).reply.text
 }
 
 function waitFor(ms) {

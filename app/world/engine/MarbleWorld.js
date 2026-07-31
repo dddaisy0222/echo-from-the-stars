@@ -3,6 +3,10 @@ import { SparkRenderer, SplatMesh } from '@sparkjsdev/spark'
 import { CharacterHotspot } from './CharacterHotspot.js'
 import { MemoryHotspot } from './MemoryHotspot.js'
 import {
+  readEchoMemory,
+  rememberWorldEvidence,
+} from '../../lib/echo-memory.ts'
+import {
   ASSET_URLS,
   CHARACTER_CONFIG,
   DEBUG_CONFIG,
@@ -655,6 +659,7 @@ class MarbleWorld {
 
   collectMemory(item) {
     this.collectedMemories.add(item.id)
+    rememberWorldEvidence(item)
     this.updateProgress()
 
     if (this.collectedMemories.size === this.memoryHotspots.length) {
@@ -690,14 +695,35 @@ class MarbleWorld {
     const playerPosition = this.playerRoot.position
     const collectedItems = this.memoryHotspots
       .filter((hotspot) => hotspot.isCollected)
-      .map((hotspot) => hotspot.memory.name)
+      .map(
+        (hotspot) =>
+          `${hotspot.memory.name}：${hotspot.memory.reveal}`,
+      )
 
+    const memory = readEchoMemory()
+    const sharedOrigin = memory.coreMemory
+      .filter(
+        (item) =>
+          item.truthStatus === 'user-stated' &&
+          ['decision', 'motivation', 'attachment'].includes(item.kind),
+      )
+      .map((item) => item.content)
+    const parallelMemories = memory.archiveMemory
+      .filter((item) =>
+        ['world', 'evidence', 'dialogue'].includes(item.kind),
+      )
+      .slice(-16)
+      .map((item) => item.content)
+    const answers = Array.isArray(this.worldState.answers)
+      ? this.worldState.answers
+      : []
     return {
       sceneId: 'flooded-bedroom',
       sceneDescription:
-        `一间被清澈浅水淹没的旧卧室。用户打开的岔路是：${this.worldState.seed || '另一条没有走过的人生'}。这条人生的代价是：${this.worldState.cost || '它也失去了一些现在拥有的东西'}。`,
+        `一间被清澈浅水淹没的旧卧室。当前可能世界是：${this.worldState.seed || '另一条没有走过的人生'}。` +
+        `这里已经出现的核心矛盾是：${this.worldState.centralTension || this.worldState.cost || '这条路同时带来得到与代价'}。`,
       nearbyObject:
-        `水面里出现了另一个自己的倒影。她知道三件人生证据，也知道始终没变的是：${this.worldState.truth || '不论走哪条路，真正重要的东西都会重复出现'}。`,
+        '水面里出现了另一个自己的倒影。她只记得这条可能世界里已经发生的事，不自动知道现实中的用户后来怎样生活。',
       playerPosition: {
         x: playerPosition.x,
         y: playerPosition.y,
@@ -705,6 +731,19 @@ class MarbleWorld {
       },
       collectedItems,
       previousChoices: readPreviousChoices(),
+      sharedOrigin,
+      parallelMemories,
+      otherPath: {
+        knownAtFork: [
+          answers[0] ? `用户当时面对的选择是：${answers[0]}` : '',
+          answers[1] ? `用户在现实中记录的选择是：${answers[1]}` : '',
+        ].filter(Boolean),
+        userDisclosures: [],
+        knownUnknowns: [
+          '岔路之后，现实中的用户具体经历了什么，除非用户亲口披露，否则未知。',
+          '平行自我对现实路径的想象不是事实，只能作为反事实投射表达。',
+        ],
+      },
     }
   }
 

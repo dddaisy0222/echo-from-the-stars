@@ -1,0 +1,185 @@
+{
+  "schema_version": "oracle-transition.v1",
+  "request_id": "oracle_req_001",
+  "transition_id": "transition_001",
+  "world_id": "world_london_ai_001",
+  "journey_id": "journey_01",
+  "seed_version": 4,
+  "pack_id": "pack_london_ai_001",
+  "based_on_state_version": 0,
+  "mode": "initialize",
+  "requested_node_id": "world_node_001",
+  "node": {
+    "node_id": "world_node_001",
+    "horizon": "month_1",
+    "title": "先让生活有落脚点",
+    "situation": "最初一个月同时包含安顿、理解团队语境和建立工作边界。岗位细节仍不完整，因此这个节点只推进那些不依赖具体职能的生活结构。",
+    "ordinary_details": [
+      "白天要记住新的工作表达，晚上还要处理住处和通勤。",
+      "与国内的重要关系仍在，但共同时间不再自然重叠。"
+    ],
+    "render_cues": [
+      {
+        "cue_id": "cue_mixed_language_notes",
+        "kind": "interface",
+        "detail": "会议笔记里并排出现英语表达与自己补写的中文解释。",
+        "causal_refs": ["constraint_english", "node_month_1"],
+        "persistence": "callback_candidate"
+      },
+      {
+        "cue_id": "cue_unfixed_calendar",
+        "kind": "routine",
+        "detail": "日历里的工作安排逐渐填满，但跨时区共同时间还没有固定位置。",
+        "causal_refs": ["constraint_relationship", "node_month_1"],
+        "persistence": "callback_candidate"
+      }
+    ],
+    "continuity_refs": [
+      "node_month_1",
+      "constraint_english",
+      "constraint_relationship"
+    ],
+    "active_tension_ids": [
+      "tension_scope",
+      "tension_shared_time"
+    ],
+    "state_change_op_ids": [
+      "op_create_work_context",
+      "op_create_shared_time",
+      "op_create_scope_tension",
+      "op_create_relationship_tension"
+    ],
+    "choices": [
+      {
+        "choice_id": "choice_define_scope",
+        "strategy": "seek_clarity",
+        "label": "先谈清工作边界",
+        "action": "约一次短会，确认接下来一个月最重要的交付与可以暂缓的事项。",
+        "commits_to": "把有限注意力优先用于明确岗位期待。",
+        "preserves": "保留对额外任务说稍后的空间。",
+        "exposes_to": "可能更早暴露自己尚未熟悉的部分。",
+        "does_not_guarantee": "不保证团队从此不会改变优先级。",
+        "reversibility": "easy",
+        "feedback_horizon": "immediate"
+      },
+      {
+        "choice_id": "choice_protect_shared_time",
+        "strategy": "protect_boundary",
+        "label": "先固定共同时间",
+        "action": "与重要的人约定一段固定的跨时区共同时间，再围绕它安排工作和生活。",
+        "commits_to": "主动为这段关系保留可预期的时间。",
+        "preserves": "保留关系在新生活中的真实位置。",
+        "exposes_to": "部分工作安排会因此需要更明确地协商。",
+        "does_not_guarantee": "不保证关系不会出现新的分歧。",
+        "reversibility": "moderate",
+        "feedback_horizon": "next_node"
+      },
+      {
+        "choice_id": "choice_observe_first",
+        "strategy": "defer_commitment",
+        "label": "先观察两周",
+        "action": "暂不增加额外承诺，记录工作节奏与生活耗时后再决定边界。",
+        "commits_to": "用实际生活信息替代入职前想象。",
+        "preserves": "保留之后调整工作与关系安排的余地。",
+        "exposes_to": "短期内岗位边界和共同时间仍会不稳定。",
+        "does_not_guarantee": "不保证观察本身会自然带来清晰答案。",
+        "reversibility": "easy",
+        "feedback_horizon": "next_node"
+      }
+    ],
+    "uncertainties": [
+      "具体岗位职责仍未确认。",
+      "团队在忙碌时是否尊重已约定的边界仍未知。"
+    ]
+  },
+  "operations": [
+    {
+      "op_id": "op_create_work_context",
+      "target_type": "variable",
+      "operation": "create",
+      "target_id": "var_work_context",
+      "target_label": "工作适应",
+      "before_state": null,
+      "after_state": "正在熟悉英语工作语境和早期团队的协作方式。",
+      "dimensions": ["skill", "social_environment", "institutional"],
+      "causal_refs": [
+        "constraint_english",
+        "constraint_early_stage",
+        "node_month_1"
+      ]
+    },
+    {
+      "op_id": "op_create_shared_time",
+      "target_type": "variable",
+      "operation": "create",
+      "target_id": "var_shared_time",
+      "target_label": "关系共同时间",
+      "before_state": null,
+      "after_state": "共同时间需要跨时区主动安排，目前尚未形成固定节奏。",
+      "dimensions": ["relational", "time", "geography"],
+      "causal_refs": [
+        "constraint_relationship",
+        "core_seed_continuity_relationship"
+      ]
+    },
+    {
+      "op_id": "op_create_scope_tension",
+      "target_type": "tension",
+      "operation": "create",
+      "target_id": "tension_scope",
+      "target_label": "职责边界与学习速度",
+      "before_state": null,
+      "after_state": "需要一边理解岗位期待，一边避免在信息不足时接下过多任务。",
+      "dimensions": ["skill", "time", "institutional", "agency"],
+      "causal_refs": [
+        "constraint_early_stage",
+        "node_month_1"
+      ]
+    },
+    {
+      "op_id": "op_create_relationship_tension",
+      "target_type": "tension",
+      "operation": "create",
+      "target_id": "tension_shared_time",
+      "target_label": "新生活与原有关系",
+      "before_state": null,
+      "after_state": "重要关系仍在，但工作与时差开始竞争同一段可用时间。",
+      "dimensions": ["relational", "time", "geography"],
+      "causal_refs": [
+        "constraint_relationship",
+        "core_seed_continuity_relationship"
+      ]
+    }
+  ],
+  "causal_edges": [
+    {
+      "edge_id": "edge_work_adaptation",
+      "cause_refs": [
+        "constraint_english",
+        "constraint_early_stage",
+        "node_month_1"
+      ],
+      "effect_op_ids": [
+        "op_create_work_context",
+        "op_create_scope_tension"
+      ],
+      "mechanism": "语言适应和岗位边界变化同时占用注意力，因此首月的主要任务是理解协作方式并建立可调整的工作边界。",
+      "strength": "grounded"
+    },
+    {
+      "edge_id": "edge_relationship_time",
+      "cause_refs": [
+        "constraint_relationship",
+        "core_seed_continuity_relationship"
+      ],
+      "effect_op_ids": [
+        "op_create_shared_time",
+        "op_create_relationship_tension"
+      ],
+      "mechanism": "关系没有因换路消失，但地理与时差让共同时间从自然发生变成需要主动配置的资源。",
+      "strength": "grounded"
+    }
+  ],
+  "instantiated_uncertain_event_ids": [],
+  "generated_at": "2026-07-31T09:30:00Z"
+}

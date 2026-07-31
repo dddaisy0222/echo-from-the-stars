@@ -567,6 +567,27 @@ textarea:focus-visible {
   margin: 70px auto 0;
 }
 
+.time-axis.single-threshold {
+  width: min(760px, 100%);
+  grid-template-columns: minmax(0, 1fr) 130px;
+}
+
+.single-threshold::before {
+  left: 42%;
+  right: 4%;
+}
+
+.unchosen-door {
+  min-height: 310px;
+  background:
+    linear-gradient(130deg, rgba(169, 216, 199, 0.08), transparent 62%),
+    rgba(7, 16, 14, 0.75);
+}
+
+.unchosen-door strong {
+  font-size: clamp(32px, 4vw, 48px);
+}
+
 .time-axis::before {
   content: "";
   position: absolute;
@@ -1205,6 +1226,41 @@ textarea:focus-visible {
   line-height: 1.7;
 }
 
+.memory-receipt {
+  max-width: 590px;
+  margin: -10px 0 25px;
+  padding: 16px 18px;
+  border-left: 2px solid rgba(169, 216, 199, 0.45);
+  background: rgba(169, 216, 199, 0.035);
+}
+
+.memory-receipt small {
+  color: rgba(169, 216, 199, 0.54);
+  font: 8px ui-monospace, monospace;
+  letter-spacing: 0.12em;
+}
+
+.memory-receipt p {
+  margin: 9px 0;
+  color: rgba(244, 240, 230, 0.7);
+  font-family: var(--serif);
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.memory-receipt span,
+.memory-receipt i {
+  display: block;
+  color: rgba(244, 240, 230, 0.36);
+  font-size: 9px;
+  line-height: 1.7;
+}
+
+.memory-receipt i {
+  color: rgba(230, 197, 134, 0.53);
+  font-style: normal;
+}
+
 .return-note {
   display: block;
   max-width: 590px;
@@ -1278,6 +1334,10 @@ textarea:focus-visible {
 
   .time-axis {
     grid-template-columns: 1fr 70px 1fr;
+  }
+
+  .time-axis.single-threshold {
+    grid-template-columns: minmax(0, 1fr) 90px;
   }
 
   .time-door {
@@ -1354,6 +1414,10 @@ textarea:focus-visible {
     grid-template-columns: 1fr;
     gap: 12px;
     margin-top: 40px;
+  }
+
+  .time-axis.single-threshold {
+    grid-template-columns: 1fr;
   }
 
   .time-axis::before,

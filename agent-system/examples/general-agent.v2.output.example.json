@@ -1,0 +1,80 @@
+{
+  "intent_proposal": {
+    "type": "past_unchosen",
+    "evidence_level": "explicit",
+    "evidence_turn_ids": ["turn_03"]
+  },
+  "field_operations": [
+    {
+      "operation": "propose",
+      "field_path": "unchosen_path",
+      "value": {
+        "verbatim": "毕业时我有机会去伦敦加入一家 AI 公司",
+        "normalized": "毕业时去伦敦加入一家 AI 公司"
+      },
+      "evidence_level": "explicit",
+      "evidence": [
+        {
+          "turn_id": "turn_03",
+          "quote": "毕业时我有机会去伦敦加入一家 AI 公司"
+        }
+      ],
+      "replaces_candidate_id": null,
+      "presented_seed_version": null
+    },
+    {
+      "operation": "propose",
+      "field_path": "real_path",
+      "value": {
+        "verbatim": "最后留在杭州进了大厂",
+        "normalized": "留在杭州进入大厂"
+      },
+      "evidence_level": "explicit",
+      "evidence": [
+        {
+          "turn_id": "turn_03",
+          "quote": "最后留在杭州进了大厂"
+        }
+      ],
+      "replaces_candidate_id": null,
+      "presented_seed_version": null
+    }
+  ],
+  "profile_conflict": null,
+  "next_turn": {
+    "goal": "collect_decision_mechanism",
+    "question": "你愿意说说，当时为什么这样选吗？",
+    "why_now": "未选择路径与现实路径已经明确，但还不知道当时真实的选择机制。",
+    "expected_answer_shape": "一个原因、现实条件或当时的偏好；不愿回答也可以跳过。",
+    "interaction_type": "voice_text",
+    "allow_skip": true,
+    "suggestion_intents": [
+      "现实条件",
+      "当时更喜欢的生活",
+      "不愿离开的人或事"
+    ]
+  },
+  "memory_candidates": [
+    {
+      "candidate_key": "journey_01.unchosen_path",
+      "operation": "upsert",
+      "content": {
+        "verbatim": "毕业时我有机会去伦敦加入一家 AI 公司",
+        "normalized": "毕业时去伦敦加入一家 AI 公司"
+      },
+      "evidence_turn_ids": ["turn_03"],
+      "sensitivity": "normal"
+    },
+    {
+      "candidate_key": "journey_01.real_path",
+      "operation": "upsert",
+      "content": {
+        "verbatim": "最后留在杭州进了大厂",
+        "normalized": "留在杭州进入大厂"
+      },
+      "evidence_turn_ids": ["turn_03"],
+      "sensitivity": "normal"
+    }
+  ],
+  "safety_signal": null
+}

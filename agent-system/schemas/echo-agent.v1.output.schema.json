@@ -1,0 +1,260 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://echo.local/schemas/echo-agent.v1.output.schema.json",
+  "title": "Echo Agent Output v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "request_id",
+    "reply_id",
+    "journey_id",
+    "world_id",
+    "world_state_version",
+    "reply",
+    "claims",
+    "resonance",
+    "used_evidence_ids",
+    "withheld",
+    "continuity_candidates",
+    "generated_at"
+  ],
+  "properties": {
+    "schema_version": { "const": "echo-agent-output.v1" },
+    "request_id": { "$ref": "#/$defs/id" },
+    "reply_id": { "$ref": "#/$defs/id" },
+    "journey_id": { "$ref": "#/$defs/id" },
+    "world_id": { "$ref": "#/$defs/id" },
+    "world_state_version": { "type": "integer", "minimum": 1 },
+    "reply": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "text",
+        "register",
+        "move",
+        "epistemic_position",
+        "follow_up_question"
+      ],
+      "properties": {
+        "text": { "type": "string", "minLength": 1, "maxLength": 800 },
+        "register": { "enum": ["ordinary", "reflective"] },
+        "move": {
+          "enum": [
+            "answer",
+            "recollect",
+            "compare",
+            "disagree",
+            "clarify",
+            "boundary",
+            "ask_back",
+            "close"
+          ]
+        },
+        "epistemic_position": {
+          "enum": [
+            "lived_answer",
+            "present_stance",
+            "limited_answer",
+            "conditional_future",
+            "counterfactual_projection",
+            "reality_boundary"
+          ]
+        },
+        "follow_up_question": {
+          "anyOf": [
+            { "type": "null" },
+            { "type": "string", "minLength": 1, "maxLength": 200 }
+          ]
+        }
+      }
+    },
+    "claims": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 12,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "claim_id",
+          "text_span",
+          "epistemic_status",
+          "evidence_refs"
+        ],
+        "properties": {
+          "claim_id": { "$ref": "#/$defs/id" },
+          "text_span": { "type": "string", "minLength": 1, "maxLength": 500 },
+          "epistemic_status": {
+            "enum": [
+              "grounded_shared_origin",
+              "grounded_parallel_memory",
+              "grounded_current_state",
+              "grounded_user_disclosure",
+              "current_subjective_stance",
+              "bounded_inference",
+              "counterfactual_projection",
+              "explicit_unknown",
+              "conditional_future",
+              "reality_disclosure"
+            ]
+          },
+          "evidence_refs": {
+            "type": "array",
+            "maxItems": 8,
+            "uniqueItems": true,
+            "items": { "$ref": "#/$defs/id" }
+          }
+        }
+      }
+    },
+    "resonance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "sentence", "source_claim_ids", "interpretive_owner"],
+      "properties": {
+        "mode": {
+          "enum": [
+            "none",
+            "callback",
+            "contrast",
+            "earned_reframe",
+            "unfinished_tension"
+          ]
+        },
+        "sentence": {
+          "anyOf": [
+            { "type": "null" },
+            { "type": "string", "minLength": 1, "maxLength": 400 }
+          ]
+        },
+        "source_claim_ids": {
+          "type": "array",
+          "maxItems": 4,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/id" }
+        },
+        "interpretive_owner": { "enum": ["none", "parallel_self"] }
+      }
+    },
+    "used_evidence_ids": {
+      "type": "array",
+      "maxItems": 30,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/id" }
+    },
+    "withheld": {
+      "type": "array",
+      "maxItems": 8,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["topic", "handling"],
+        "properties": {
+          "topic": { "type": "string", "minLength": 1, "maxLength": 300 },
+          "handling": {
+            "enum": [
+              "unknown",
+              "not_lived_yet",
+              "outside_world",
+              "other_path_unknown",
+              "conflicting_evidence",
+              "not_authorized"
+            ]
+          }
+        }
+      }
+    },
+    "continuity_candidates": {
+      "type": "array",
+      "maxItems": 2,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "candidate_id",
+          "claim_id",
+          "kind",
+          "content",
+          "retention"
+        ],
+        "properties": {
+          "candidate_id": { "$ref": "#/$defs/id" },
+          "claim_id": { "$ref": "#/$defs/id" },
+          "kind": {
+            "enum": [
+              "current_view",
+              "conversation_commitment",
+              "relationship_context",
+              "other_path_projection"
+            ]
+          },
+          "content": { "type": "string", "minLength": 1, "maxLength": 500 },
+          "retention": { "const": "journey" }
+        }
+      }
+    },
+    "generated_at": { "type": "string", "format": "date-time" }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "resonance": {
+            "properties": { "mode": { "const": "none" } },
+            "required": ["mode"]
+          }
+        },
+        "required": ["resonance"]
+      },
+      "then": {
+        "properties": {
+          "resonance": {
+            "properties": {
+              "sentence": { "type": "null" },
+              "source_claim_ids": { "maxItems": 0 },
+              "interpretive_owner": { "const": "none" }
+            }
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "resonance": {
+            "properties": {
+              "sentence": { "type": "string", "minLength": 1 },
+              "source_claim_ids": { "minItems": 1 },
+              "interpretive_owner": { "const": "parallel_self" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "resonance": {
+            "properties": { "mode": { "const": "earned_reframe" } },
+            "required": ["mode"]
+          }
+        },
+        "required": ["resonance"]
+      },
+      "then": {
+        "properties": {
+          "resonance": {
+            "properties": {
+              "source_claim_ids": { "minItems": 2 }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_.:-]{1,160}$"
+    }
+  }
+}

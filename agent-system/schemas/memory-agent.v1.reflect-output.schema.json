@@ -1,0 +1,125 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://echo.local/schemas/memory-agent.v1.reflect-output.schema.json",
+  "title": "Echo Memory Agent Reflect Output v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["mode", "proposals", "insufficient_evidence"],
+  "properties": {
+    "mode": { "const": "reflect" },
+    "proposals": {
+      "type": "array",
+      "maxItems": 5,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "proposal_key",
+          "statement",
+          "scope",
+          "supporting_evidence_ids",
+          "counter_evidence_ids",
+          "context_keys",
+          "missing_evidence",
+          "falsification_condition",
+          "user_facing_copy"
+        ],
+        "properties": {
+          "proposal_key": {
+            "type": "string",
+            "pattern": "^[a-z0-9_.-]{3,160}$"
+          },
+          "statement": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "scope": {
+            "enum": [
+              "decision_pattern",
+              "attention_pattern",
+              "valued_continuity",
+              "recurring_tension",
+              "conversation_preference"
+            ]
+          },
+          "supporting_evidence_ids": {
+            "type": "array",
+            "uniqueItems": true,
+            "minItems": 2,
+            "maxItems": 20,
+            "items": { "$ref": "#/$defs/id" }
+          },
+          "counter_evidence_ids": {
+            "type": "array",
+            "uniqueItems": true,
+            "maxItems": 20,
+            "items": { "$ref": "#/$defs/id" }
+          },
+          "context_keys": {
+            "type": "array",
+            "uniqueItems": true,
+            "minItems": 2,
+            "maxItems": 20,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          "missing_evidence": {
+            "type": "array",
+            "maxItems": 8,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 300
+            }
+          },
+          "falsification_condition": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "user_facing_copy": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          }
+        }
+      }
+    },
+    "insufficient_evidence": {
+      "type": "array",
+      "maxItems": 8,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["candidate_statement", "reason", "needed"],
+        "properties": {
+          "candidate_statement": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "needed": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{1,159}$"
+    }
+  }
+}
